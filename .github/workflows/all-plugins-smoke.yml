@@ -59,9 +59,9 @@ jobs:
 
       - name: Fleet-wide SKILL.md frontmatter audit (iter 87)
         run: node scripts/audit-skill-frontmatter.mjs
-        # Scans every plugins/*/skills/*/SKILL.md for required frontmatter:
-        # name / description / allowed-tools all present and non-empty,
-        # no wildcard allowed-tools (security), name matches directory.
+        # Scans plugin and bundled .claude SKILL.md frontmatter.
+        # All skills require matching names and descriptions. Plugin skills
+        # also require allowed-tools. Every declared tool list is explicit.
         # Each plugin's own smoke checks its own skills; this catches
         # violations that escape per-plugin coverage (new plugin without
         # smoke, new skill without smoke-list update, etc.).
