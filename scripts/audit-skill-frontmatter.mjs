@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// audit-skill-frontmatter — fleet-wide check that every plugins/*/skills/*/SKILL.md
-// has the required frontmatter fields with valid values.
+// audit-skill-frontmatter — fleet-wide check for plugin and bundled SKILL.md
+// frontmatter.
 //
 // Each plugin's own smoke catches missing fields in ITS skills. This audit
 // catches violations that escape per-plugin coverage:
@@ -8,24 +8,26 @@
 //   - A skill added to an existing plugin that updated its smoke's count
 //     in step 2 but forgot to add a frontmatter check.
 //   - Edits that delete a required field after smoke was authored.
+//   - Bundled .claude skills whose names drift from their directories.
 //
 // USAGE
 //   node scripts/audit-skill-frontmatter.mjs                  # all skills
 //   node scripts/audit-skill-frontmatter.mjs --format json    # machine-readable
 //   node scripts/audit-skill-frontmatter.mjs --only ruflo-cost-tracker
+//   node scripts/audit-skill-frontmatter.mjs --only .claude   # bundled skills
 //
 // CHECKS per SKILL.md
 //   1. File has a `---` frontmatter block at the top.
 //   2. `name:` field present and non-empty.
 //   3. `description:` field present and non-empty.
-//   4. `allowed-tools:` field present (security — no implicit "all tools").
-//   5. `allowed-tools:` is NOT a wildcard (`*`).
+//   4. Plugin skills declare `allowed-tools:` (no implicit "all tools").
+//   5. Any declared `allowed-tools:` is NOT a wildcard (`*`).
 //   6. `name:` value matches the directory name (drift guard).
 //
 // EXIT CODES
 //   0  no violations
 //   1  at least one violation found
-//   2  scan error (no plugins dir)
+//   2  scan error (no skill directories found)
 
 import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { dirname, join, basename } from 'node:path';
@@ -34,6 +36,7 @@ import { fileURLToPath } from 'node:url';
 const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = dirname(SCRIPTS_DIR);
 const PLUGINS_DIR = join(REPO_ROOT, 'plugins');
+const BUNDLED_SKILLS_DIR = join(REPO_ROOT, '.claude', 'skills');
 
 const ARGS = (() => {
   const a = { format: 'table', only: null };
@@ -47,26 +50,47 @@ const ARGS = (() => {
   return a;
 })();
 
+function discoverSkillDirectory(plugin, skillsDir, { includeMissing, requiresAllowedTools }) {
+  const out = [];
+  let entries;
+  try { entries = readdirSync(skillsDir); } catch { return out; }
+  for (const skillDir of entries) {
+    const skillPath = join(skillsDir, skillDir);
+    let stat;
+    try { stat = statSync(skillPath); } catch { continue; }
+    if (!stat.isDirectory()) continue;
+    const md = join(skillPath, 'SKILL.md');
+    const exists = existsSync(md);
+    if (!exists && !includeMissing) continue;
+    out.push({
+      plugin,
+      skillDir,
+      md,
+      exists,
+      requiresAllowedTools,
+    });
+  }
+  return out;
+}
+
 function discoverSkills() {
   const out = [];
+  if (!ARGS.only || ARGS.only.has('.claude')) {
+    out.push(...discoverSkillDirectory('.claude', BUNDLED_SKILLS_DIR, {
+      includeMissing: false,
+      requiresAllowedTools: false,
+    }));
+  }
+
   let plugins;
   try { plugins = readdirSync(PLUGINS_DIR); } catch { return out; }
   for (const plugin of plugins) {
     if (ARGS.only && !ARGS.only.has(plugin)) continue;
     const skillsDir = join(PLUGINS_DIR, plugin, 'skills');
-    let stat;
-    try { stat = statSync(skillsDir); } catch { continue; }
-    if (!stat.isDirectory()) continue;
-    let entries;
-    try { entries = readdirSync(skillsDir); } catch { continue; }
-    for (const skillDir of entries) {
-      const skillPath = join(skillsDir, skillDir);
-      let s;
-      try { s = statSync(skillPath); } catch { continue; }
-      if (!s.isDirectory()) continue;
-      const md = join(skillPath, 'SKILL.md');
-      out.push({ plugin, skillDir, md, exists: existsSync(md) });
-    }
+    out.push(...discoverSkillDirectory(plugin, skillsDir, {
+      includeMissing: true,
+      requiresAllowedTools: true,
+    }));
   }
   return out.sort((a, b) => (a.plugin + a.skillDir).localeCompare(b.plugin + b.skillDir));
 }
@@ -108,7 +132,9 @@ function auditSkill(skill) {
   if (!fm.name) violations.push({ check: 'name field', detail: 'missing or empty' });
   if (!fm.description) violations.push({ check: 'description field', detail: 'missing or empty' });
   if (fm['allowed-tools'] === undefined) {
-    violations.push({ check: 'allowed-tools field', detail: 'missing (security — no implicit "all tools")' });
+    if (skill.requiresAllowedTools) {
+      violations.push({ check: 'allowed-tools field', detail: 'missing (security — no implicit "all tools")' });
+    }
   } else if (fm['allowed-tools'].trim() === '*') {
     violations.push({ check: 'allowed-tools wildcard', detail: 'value is `*` — explicit list required' });
   }
@@ -124,7 +150,7 @@ function auditSkill(skill) {
 function main() {
   const skills = discoverSkills();
   if (skills.length === 0) {
-    console.error('audit-skill-frontmatter: no plugins/*/skills/*/SKILL.md found');
+    console.error('audit-skill-frontmatter: no SKILL.md directories found');
     process.exit(2);
   }
   const findings = [];
@@ -141,9 +167,11 @@ function main() {
   }
 
   if (ARGS.format === 'json') {
+    const pluginSkills = skills.filter((skill) => skill.plugin !== '.claude');
     console.log(JSON.stringify({
       skillsScanned: skills.length,
-      pluginCount: new Set(skills.map((s) => s.plugin)).size,
+      pluginCount: new Set(pluginSkills.map((skill) => skill.plugin)).size,
+      bundledSkillCount: skills.length - pluginSkills.length,
       filesWithViolations: findings.length,
       findings,
       generatedAt: new Date().toISOString(),
@@ -151,13 +179,15 @@ function main() {
   } else {
     console.log('# audit-skill-frontmatter');
     console.log('');
-    const pc = new Set(skills.map((s) => s.plugin)).size;
-    console.log(`Scanned **${skills.length}** SKILL.md files across **${pc}** plugins.`);
+    const pluginSkills = skills.filter((skill) => skill.plugin !== '.claude');
+    const pc = new Set(pluginSkills.map((skill) => skill.plugin)).size;
+    const bundledCount = skills.length - pluginSkills.length;
+    console.log(`Scanned **${skills.length}** SKILL.md files across **${pc}** plugins and **${bundledCount}** bundled skills.`);
     console.log('');
     if (findings.length === 0) {
       console.log('✓ Every SKILL.md has valid frontmatter:');
-      console.log('  - name / description / allowed-tools all present and non-empty');
-      console.log('  - no wildcard allowed-tools');
+      console.log('  - name and description are present and non-empty');
+      console.log('  - plugin skills declare explicit allowed-tools');
       console.log('  - name matches enclosing directory');
     } else {
       console.log(`⚠ Found ${findings.length} skill(s) with frontmatter violations:`);
