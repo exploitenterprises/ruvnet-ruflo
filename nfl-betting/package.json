@@ -1,0 +1,19 @@
+{
+  "name": "nfl-betting-strategy",
+  "version": "0.1.0",
+  "description": "Weekly-updating NFL betting analytics engine: power ratings, matchup projections, weather/coach adjustments, cross-sportsbook value detection, and futures pricing.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "nfl-betting": "./cli.js"
+  },
+  "scripts": {
+    "update": "node cli.js update",
+    "value": "node cli.js value",
+    "futures": "node cli.js futures",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

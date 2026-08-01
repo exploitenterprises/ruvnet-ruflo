@@ -1,0 +1,4 @@
+{
+  "_comment": "Optional manual overrides layered on top of the empirically-derived scheme tendencies (src/analysis/schemeTendencies.js). Keyed by team abbreviation; each value is a short free-text note that gets surfaced in the weekly report, e.g. a coordinator change or a known scheme shift the stats haven't caught up to yet. Leave empty and let the model run on data alone otherwise.",
+  "example": "Not a real team code — delete this key. e.g. \"NE\": \"New OC installed a run-heavy scheme in Week 4, sample size still small\""
+}

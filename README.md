@@ -704,6 +704,14 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for:
 - Coding standards
 - Testing requirements
 
+## 🏈 **NFL Betting Strategy Engine**
+
+A standalone, weekly-updating NFL analytics tool lives in [`nfl-betting/`](./nfl-betting) —
+Elo-based power ratings, offense/defense/scheme/weather matchup projections,
+cross-sportsbook value detection, and Monte Carlo futures pricing (division
+winners, conference champs, Super Bowl). See [`nfl-betting/README.md`](./nfl-betting/README.md)
+for setup and how it works.
+
 ## 📄 **License**
 
 MIT License - see [LICENSE](LICENSE) file for details.
