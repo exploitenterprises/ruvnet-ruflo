@@ -1,4 +1,7 @@
 node_modules/
 data/cache/*.json
-reports/*.md
-reports/*.json
+# CLI-generated per-run outputs (node cli.js update) are ephemeral, not committed.
+# Dated report snapshots (e.g. futures-board-YYYY-MM-DD.md) from the recurring
+# refresh ARE committed for history — only the CLI's own naming pattern is ignored.
+reports/week-*.md
+reports/week-*.json
