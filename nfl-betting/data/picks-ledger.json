@@ -1,0 +1,4 @@
+{
+  "_schema": "Each entry: id, dateIssued (ISO), category ('game'|'prop'), label (matchup or player), market, selection, price (american odds), player (prop picks only), gameDate, status ('pending'|'win'|'loss'|'push'), settledDate, note. Only picks the board actually commits to (not hedged 'market snapshot' notes) get logged here — see nfl-betting/README.md#track-record.",
+  "picks": []
+}

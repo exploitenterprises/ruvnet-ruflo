@@ -78,6 +78,27 @@ providers/            live data in                 analysis/                 rep
   (head-to-head, strength of victory, etc.) are **not** modeled — ties are
   broken randomly; call this out to anyone using the output.
 
+## Track record
+
+`data/picks-ledger.json` is the append-only log of every pick the board has
+actually **committed to** — a clear side/selection with a price, not a
+hedged "market snapshot" read. `src/picksLedger.js` has `addPick` (log a new
+pending pick, id-idempotent) and `settlePick` (grade it win/loss/push once
+the game's final). `src/analysis/trackRecord.js` turns that ledger into what
+the board displays:
+
+- `gradeSummary(picks, category?)` — win/loss/push/pending counts and win%
+  (pushes and pending picks are excluded from the win% denominator, standard
+  handicapping convention), overall or scoped to `'game'` / `'prop'`.
+- `currentStreak(picks)` / `longestStreak(picks, type)` — the app's own
+  streak of correct calls, skipping pushes without breaking the streak.
+- `playerStreaks(picks)` — which players are currently on a run of hit props
+  ("hot" players), most recent settled prop picks per player. A trend
+  signal, not a claim that the streak predicts anything.
+
+The displayed record is only ever derived from the ledger — never
+hand-written — so it can't drift from what was actually picked and graded.
+
 ## Setup
 
 ```bash
