@@ -13,10 +13,13 @@ Publish `nfl-edge.html` as a Claude Artifact (or wherever it's hosted).
 
 Five pages behind a CSS-only radio-button tab switcher (no framework):
 
-- **NFL Futures** — transaction wire, Super Bowl rail, futures value board, division grid
+- **NFL Futures** — transaction wire, Super Bowl rail, MVP rail, Offensive/Defensive
+  Rookie of the Year + stat-leader awards grid, futures value board, all-8 division grid
 - **NFL Props** — empty state until real prop menus post (Preseason Week 1, Aug 13+)
 - **NFL Picks** — spread-first weekly game picks
-- **CFB Futures** — coaching/portal wire, CFP rail, futures value board, championship-race grid
+- **CFB Futures** — coaching/portal wire, CFP rail, futures value board, all-9-conference
+  championship-race grid (Power 4 + every Group of 5 conference — AAC, Mountain West,
+  Conference USA, MAC, Sun Belt)
 - **CFB Picks** — spread-first weekly game picks
 
 A shared hero + Track Record strip sit above the tabs; shared methodology/legal
