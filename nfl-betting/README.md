@@ -98,12 +98,22 @@ providers/            live data in                 analysis/                 rep
   (head-to-head, strength of victory, etc.) are **not** modeled — ties are
   broken randomly; call this out to anyone using the output.
 
+## Pick philosophy
+
+Against-the-spread is the primary weekly signal for both leagues — every
+committed game pick defaults to a spread call. Moneylines aren't posted
+just because a price exists; one gets added only when the model has real
+separation from the market. Totals stay supporting context unless there's
+a genuine edge there too.
+
 ## Track record
 
 `data/picks-ledger.json` is the append-only log of every pick the board has
 actually **committed to** — a clear side/selection with a price, not a
-hedged "market snapshot" read. `src/picksLedger.js` has `addPick` (log a new
-pending pick, id-idempotent) and `settlePick` (grade it win/loss/push once
+hedged "market snapshot" read. Each entry also carries `sport` ('nfl'|'cfb')
+and `market` ('spread'|'moneyline'|'total') so the record can be scoped
+either way. `src/picksLedger.js` has `addPick` (log a new pending pick,
+id-idempotent) and `settlePick` (grade it win/loss/push once
 the game's final). `src/analysis/trackRecord.js` turns that ledger into what
 the board displays:
 
