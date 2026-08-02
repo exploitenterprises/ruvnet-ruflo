@@ -61,6 +61,10 @@ deno info
 # Update Deno to latest version
 curl -fsSL https://deno.land/x/install/install.sh | sh
 
+# If deno.land is unreachable (e.g. restricted network/proxy), install the
+# official "deno" npm package instead, which ships prebuilt binaries:
+npm install -g deno
+
 # Clear Deno cache
 deno cache --reload src/cli/index.ts
 
