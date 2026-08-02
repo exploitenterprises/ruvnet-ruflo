@@ -1,12 +1,32 @@
 # NFL Betting Strategy Engine
 
-A weekly-updating NFL analytics engine that projects every game on the slate,
-scans sportsbook lines for +EV value, and prices futures (division winners,
-conference champs, Super Bowl) against the market — built from team stats,
-home/away splits, weather, and empirically-derived coaching/scheme tendencies.
+A weekly-updating sports analytics engine — NFL plus College Football — that
+projects games, scans sportsbook lines for +EV value, and prices futures
+(division/conference winners, Super Bowl/national championship) against the
+market — built from team stats, home/away splits, weather, and
+empirically-derived coaching/scheme tendencies. Published as the "Red Hot
+Locks" app-style Artifact, with a separate tab per league.
 
 Standalone Node package, independent of the rest of this repo (claude-flow).
 Run it with plain `node`, no build step.
+
+## College Football
+
+CFB reuses the same odds math, value-detection, and weather logic as the NFL
+side (`probability.js`, `statMath.js`, `valueFinder.js`, `weatherImpact.js`
+are sport-agnostic). Two things are deliberately different:
+
+- **Reference data** (`src/data/cfbConferences.js`) covers the Power 4
+  conferences plus the Group of 5/independent programs that actually move
+  betting markets — not all 130+ FBS teams. FBS conferences realign often
+  enough that an exhaustive roster would need constant upkeep for little
+  betting-relevant payoff; extend the list as coverage needs grow.
+- **Futures** (`src/analysis/cfbFutures.js`) does no-vig value comparison
+  the same way `futures.js` does for the NFL, but skips the Monte Carlo
+  bracket simulation — the NFL sim leans on a fixed 32-team/8-division/
+  7-seed structure that doesn't map onto a 130+-team field with a 12-team
+  CFP (5 conference-champion auto bids + 7 at-large). That's a real
+  follow-up project, not something to fake with a simplified stand-in.
 
 > **This is a research/decision-support tool, not financial advice.** Sports
 > betting outcomes are inherently uncertain; the model can and will be wrong.

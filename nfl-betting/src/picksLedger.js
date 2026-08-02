@@ -12,7 +12,7 @@ export async function loadLedger() {
 
 export async function saveLedger(picks) {
   const payload = {
-    _schema: "Each entry: id, dateIssued (ISO), category ('game'|'prop'), label (matchup or player), market, selection, price (american odds), player (prop picks only), gameDate, status ('pending'|'win'|'loss'|'push'), settledDate, note. Only picks the board actually commits to (not hedged 'market snapshot' notes) get logged here — see nfl-betting/README.md#track-record.",
+    _schema: "Each entry: id, sport ('nfl'|'cfb', defaults to 'nfl' if omitted), dateIssued (ISO), category ('game'|'prop'), label (matchup or player), market, selection, price (american odds), player (prop picks only), gameDate, status ('pending'|'win'|'loss'|'push'), settledDate, note. Only picks the board actually commits to (not hedged 'market snapshot' notes) get logged here — see nfl-betting/README.md#track-record. Filter by sport before calling trackRecord.js helpers to get sport-scoped stats.",
     picks,
   };
   await writeFile(LEDGER_PATH, JSON.stringify(payload, null, 2));
