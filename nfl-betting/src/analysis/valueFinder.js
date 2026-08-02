@@ -15,8 +15,16 @@ export function findValueBets(projection, lines) {
     const trueProb = modelProbability(projection, market, side, quotes);
     if (trueProb == null) continue;
 
-    // Best available price for this side across books (line shopping).
-    const best = quotes.reduce((a, b) => (americanBetterFor(a.price) > americanBetterFor(b.price) ? a : b));
+    // Book-by-book EV comparison for this side, best first. With a single
+    // model probability, the best-price book and the best-EV book are always
+    // the same book (EV is monotonic in price for fixed trueProb) — that's
+    // expected, not a bug, and is why "best odds" and "best EV" surface
+    // identically in the UI. Kept as a full list (not just the winner) so
+    // the board can show real line-shopping across every book, not just name one.
+    const bookComparison = quotes
+      .map((q) => ({ book: q.book, price: q.price, points: q.points, evPer100: round2(expectedValue(trueProb, q.price)) }))
+      .sort((a, b) => b.evPer100 - a.evPer100);
+    const best = bookComparison[0];
 
     const consensus = consensusFairProb(byMarketSide, market, side);
     const edgeVsBook = edgePercent(trueProb, best.price);
@@ -34,8 +42,9 @@ export function findValueBets(projection, lines) {
         marketFairProb: consensus != null ? round3(consensus) : null,
         edgeVsBookPct: round2(edgeVsBook),
         edgeVsMarketPct: edgeVsMarket != null ? round2(edgeVsMarket) : null,
-        expectedValuePer100: round2(expectedValue(trueProb, best.price)),
+        expectedValuePer100: best.evPer100,
         kellyStakePct: round2(kellyStake(trueProb, best.price) * 100),
+        bookComparison,
       });
     }
   }
@@ -91,11 +100,6 @@ function medianPoints(quotes) {
   if (!points.length) return null;
   const mid = Math.floor(points.length / 2);
   return points.length % 2 ? points[mid] : (points[mid - 1] + points[mid]) / 2;
-}
-
-// Higher decimal-equivalent value = better price for the bettor, regardless of sign.
-function americanBetterFor(price) {
-  return price > 0 ? price : 10000 / -price;
 }
 
 function average(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }

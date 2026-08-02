@@ -70,8 +70,14 @@ export function generateMockRemainingSchedule(weeksRemaining = 17) {
   return games;
 }
 
+// The 6 books the board shops across for every pick. Real provider (oddsProvider.js)
+// pulls whichever books The Odds API returns for the account's region/plan;
+// this fixed list is just the mock-mode stand-in for demoing line shopping.
+export const BOOKS = ['DraftKings', 'Fanatics', 'FanDuel', 'BetMGM', 'BetRivers', 'Bet365'];
+
 // Deliberately includes a couple of off-consensus prices so the value finder
-// demo has something to surface.
+// demo has something to surface, plus small per-book jitter so line shopping
+// across all 6 books actually has something to compare.
 export function generateMockGameLines(games) {
   const lines = [];
   for (const [i, g] of games.entries()) {
@@ -81,13 +87,15 @@ export function generateMockGameLines(games) {
     const homePrice = spread <= 0 ? -110 - Math.round(Math.abs(spread) * 8) : -110 + Math.round(spread * 8);
     const awayPrice = -220 - homePrice;
     const skew = i === 0 ? 25 : 0; // inject a mispricing on the first game for demo purposes
-    for (const book of ['DraftKings', 'FanDuel', 'BetMGM']) {
-      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'moneyline', side: 'home', price: homePrice + (book === 'BetMGM' ? skew : 0) });
-      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'moneyline', side: 'away', price: awayPrice });
-      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'spread', side: 'home', price: -110, points: -spread });
-      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'spread', side: 'away', price: -110, points: spread });
-      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'total', side: 'over', price: -110, points: total });
-      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'total', side: 'under', price: -110, points: total });
+    for (const book of BOOKS) {
+      const jitterRand = mulberry32(hashSeed('jitter-' + book + g.home + g.away));
+      const jitter = () => Math.round((jitterRand() - 0.5) * 10); // +/-5 cents of book-to-book shopping variance
+      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'moneyline', side: 'home', price: homePrice + jitter() + (book === 'BetMGM' ? skew : 0) });
+      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'moneyline', side: 'away', price: awayPrice + jitter() });
+      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'spread', side: 'home', price: -110 + jitter(), points: -spread });
+      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'spread', side: 'away', price: -110 + jitter(), points: spread });
+      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'total', side: 'over', price: -110 + jitter(), points: total });
+      lines.push({ book, gameId: `${g.away}@${g.home}`, market: 'total', side: 'under', price: -110 + jitter(), points: total });
     }
   }
   return lines;

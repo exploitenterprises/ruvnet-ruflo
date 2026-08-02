@@ -83,3 +83,36 @@ test('results are sorted by edge vs book, best first', () => {
     assert.ok(bets[i - 1].edgeVsBookPct >= bets[i].edgeVsBookPct);
   }
 });
+
+test('bookComparison lists every quoted book for the winning side, sorted best-EV first', () => {
+  const projection = makeProjection();
+  const lines = [
+    { book: 'DraftKings', gameId: 'g1', market: 'moneyline', side: 'home', price: 105 },
+    { book: 'FanDuel', gameId: 'g1', market: 'moneyline', side: 'home', price: 130 },
+    { book: 'BetMGM', gameId: 'g1', market: 'moneyline', side: 'home', price: 115 },
+    { book: 'DraftKings', gameId: 'g1', market: 'moneyline', side: 'away', price: -150 },
+  ];
+  const bets = findValueBets(projection, lines);
+  const mlBet = bets.find((b) => b.market === 'moneyline' && b.side === 'home');
+  assert.equal(mlBet.bookComparison.length, 3);
+  assert.equal(mlBet.book, 'FanDuel'); // best price (+130) among the three
+  assert.equal(mlBet.bookComparison[0].book, 'FanDuel');
+  for (let i = 1; i < mlBet.bookComparison.length; i++) {
+    assert.ok(mlBet.bookComparison[i - 1].evPer100 >= mlBet.bookComparison[i].evPer100);
+  }
+});
+
+test('the best-odds book and the best-EV book are always the same book for a fixed model probability', () => {
+  const projection = makeProjection();
+  const lines = [
+    { book: 'DraftKings', gameId: 'g1', market: 'moneyline', side: 'home', price: 105 },
+    { book: 'FanDuel', gameId: 'g1', market: 'moneyline', side: 'home', price: 130 },
+    { book: 'BetRivers', gameId: 'g1', market: 'moneyline', side: 'home', price: 118 },
+    { book: 'DraftKings', gameId: 'g1', market: 'moneyline', side: 'away', price: -150 },
+  ];
+  const bets = findValueBets(projection, lines);
+  const mlBet = bets.find((b) => b.market === 'moneyline' && b.side === 'home');
+  const bestByEv = mlBet.bookComparison.reduce((a, b) => (b.evPer100 > a.evPer100 ? b : a));
+  assert.equal(mlBet.book, bestByEv.book);
+  assert.equal(mlBet.expectedValuePer100, bestByEv.evPer100);
+});

@@ -1,0 +1,56 @@
+# Red Hot Locks — the board (public Artifact source)
+
+Source for the free public board (previously only lived in an ephemeral
+scratch directory — now tracked here so a container restart can't lose it).
+
+```bash
+node build.mjs   # inlines fonts (Erica One / Outfit / Red Hat Mono), writes nfl-edge.html
+```
+
+Publish `nfl-edge.html` as a Claude Artifact (or wherever it's hosted).
+
+## Structure
+
+Five pages behind a CSS-only radio-button tab switcher (no framework):
+
+- **NFL Futures** — transaction wire, Super Bowl rail, futures value board, division grid
+- **NFL Props** — empty state until real prop menus post (Preseason Week 1, Aug 13+)
+- **NFL Picks** — spread-first weekly game picks
+- **CFB Futures** — coaching/portal wire, CFP rail, futures value board, championship-race grid
+- **CFB Picks** — spread-first weekly game picks
+
+A shared hero + Track Record strip sit above the tabs; shared methodology/legal
+sits below. `.cfb-theme` on the two CFB panels swaps the accent color
+(orange/violet) instead of duplicating CSS per panel.
+
+## Team badges & player avatars — not official logos or photos
+
+Official team logos and player photos are trademarked/copyrighted assets we
+don't have rights to use. `.team-badge` is a colored monogram chip using
+each team's real (public) brand color — not a logo image. `.player-avatar`
+is a generic jersey-silhouette icon. Both are driven by `data-team="XXX"` /
+`data-player="..."` attributes; the `TEAM_META` color map and badge injector
+live in the `<script>` block at the end of `template.html`.
+
+## Line shopping (best odds / best EV)
+
+Every committed pick shows the best price across six books (DraftKings,
+Fanatics, FanDuel, BetMGM, BetRivers, Bet365) via the `.book-shop` component,
+sourced from `nfl-betting/src/analysis/valueFinder.js`'s `bookComparison`
+field. The best-odds book and the best-EV book are always the same book for
+a fixed model probability — that's expected math, not a UI bug, and the
+methodology section says so explicitly.
+
+## Animation system
+
+Reveal-on-scroll (IntersectionObserver, one-time), spring-eased hover lift
+on cards, count-up numbers for the Track Record tiles, a one-time hero
+shimmer, and a football-flyby transition on page-tab changes. Everything
+respects `prefers-reduced-motion` — check the CSS media query and the `reduceMotion`
+JS flag before adding new motion.
+
+## Mascot
+
+`#chili-mascot` is an SVG `<symbol>` defined once and reused via `<use>` for
+both the small nav mark and the large hero illustration, plus a standalone
+`#chili-football` symbol for the tab-transition flyby element.
