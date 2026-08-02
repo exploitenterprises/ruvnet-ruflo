@@ -41,6 +41,26 @@ field. The best-odds book and the best-EV book are always the same book for
 a fixed model probability — that's expected math, not a UI bug, and the
 methodology section says so explicitly.
 
+## Click-to-compare (tap a pick's odds)
+
+Every pick's `.spread-block` is clickable (`role="button"`, keyboard-accessible)
+and toggles an adjacent `.book-compare` panel showing the per-book breakdown
+for that exact line — this is the interaction, not just the `.book-shop`
+best-price summary. Wiring: `data-compare="some-id"` on the trigger,
+`id="some-id"` on the `.book-compare` panel, toggled by the click-to-compare
+JS block (searches for `[data-compare]`).
+
+**Data honesty note**: WebSearch can summarize odds articles but can't
+reliably pull distinct per-book prices for lower-profile games — the actual
+odds-comparison sites (SportsBettingDime, VegasInsider, etc.) block
+WebFetch. Where only one or two books' numbers are independently confirmed,
+say so explicitly in the panel rather than inventing plausible-looking
+numbers for the rest — see the Hall of Fame Game example in the current
+build. This resolves for real once a live odds feed
+(`ODDS_API_KEY` → `nfl-betting/src/providers/oddsProvider.js`) is connected;
+the `bookComparison` field that powers this UI already works end-to-end in
+mock mode (tested in `nfl-betting/test/valueFinder.test.js`).
+
 ## Animation system
 
 Reveal-on-scroll (IntersectionObserver, one-time), spring-eased hover lift

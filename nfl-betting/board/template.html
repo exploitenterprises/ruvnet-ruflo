@@ -288,13 +288,32 @@
      the market, styled as a secondary "also like" callout, not co-equal. */
   .spread-block {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    margin-top: 12px; padding: 10px 12px; border-radius: 8px;
+    margin-top: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; user-select: none;
     background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
     border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+    transition: background .15s ease, transform .15s cubic-bezier(.34,1.56,.64,1);
   }
+  .spread-block:hover { background: color-mix(in srgb, var(--accent) 16%, var(--surface-2)); transform: translateY(-1px); }
+  .spread-block:active { transform: translateY(0) scale(0.99); }
   .spread-block .lbl { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .spread-block .lbl .tap-hint { color: var(--accent); }
   .spread-block .call { font-family: 'Erica One'; font-size: 19px; text-transform: uppercase; color: var(--accent); margin-top: 2px; }
+  .spread-block .price-col { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
   .spread-block .price { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text); }
+  .spread-block .chev { font-size: 11px; color: var(--text-dim); transition: transform .25s cubic-bezier(.34,1.56,.64,1); }
+  .spread-block[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+  /* ---------- Click-to-compare book panel ---------- */
+  .book-compare { max-height: 0; overflow: hidden; transition: max-height .35s cubic-bezier(.16,1,.3,1); }
+  .book-compare.open { max-height: 400px; }
+  .book-compare-inner { margin-top: 8px; padding: 12px; border-radius: 8px; background: var(--surface-2); border: 1px dashed var(--line); }
+  .book-compare-inner .bc-title { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+  .bc-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--line); }
+  .bc-row:first-of-type { border-top: none; }
+  .bc-row .bc-book { font-weight: 700; font-size: 13px; }
+  .bc-row .bc-price { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text); }
+  .bc-row.bc-best .bc-price { color: var(--good); }
+  .bc-note { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
 
   /* ---------- Book comparison (best odds / best EV) ---------- */
   .book-shop { margin-top: 10px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -532,7 +551,7 @@
     <h1>The Board</h1>
     <p class="sub">NFL &amp; College Football — futures, transactions, and weekly picks, game lines and player props, wherever the market and the story disagree. No cap on how many signals we surface.</p>
     <div class="meta-row">
-      <span class="meta-chip">Updated <b>Aug 2, 2026 · 5:49 PM ET</b></span>
+      <span class="meta-chip">Updated <b>Aug 2, 2026 · 6:58 PM ET</b></span>
       <span class="meta-chip">Edition <b>Preseason — Kickoff Week</b></span>
       <span class="meta-chip">Next drop <b>Tue, Aug 4</b></span>
     </div>
@@ -797,16 +816,24 @@
         <span class="matchup"><span data-team="CAR">Panthers</span> @ <span data-team="ARI">Cardinals</span></span>
         <span class="when">Hall of Fame Game · Canton, OH · Thu Aug 6 · 8:00 PM ET · NBC</span>
       </div>
-      <div class="spread-block">
-        <div><div class="lbl">Spread — no lean, market number only</div><div class="call">Cardinals -1.5</div></div>
-        <span class="price num">-110</span>
+      <div class="spread-block" role="button" tabindex="0" aria-expanded="false" data-compare="cardinals-spread">
+        <div><div class="lbl">Spread — no lean, market number only · <span class="tap-hint">tap to compare books</span></div><div class="call">Cardinals -1.5</div></div>
+        <div class="price-col"><span class="price num">-110</span><span class="chev">▾</span></div>
+      </div>
+      <div class="book-compare" id="cardinals-spread">
+        <div class="book-compare-inner">
+          <div class="bc-title">Cardinals -1.5 by book</div>
+          <div class="bc-row"><span class="bc-book">BetMGM</span><span class="bc-price num">-110 (35.5 total)</span></div>
+          <div class="bc-row"><span class="bc-book">Market consensus (most books)</span><span class="bc-price num">-110 (36.5 total)</span></div>
+          <div class="bc-note">Honest gap: BetMGM's own number is independently confirmed; DraftKings, FanDuel, Fanatics, BetRivers, and Bet365 individually aren't reliably pullable via web search for a lower-volume preseason game like this one — no bot-blocked odds-comparison sites would load. This panel populates with all 6 books automatically once a live odds feed (<span class="num">ODDS_API_KEY</span>, see <span class="num">nfl-betting/src/providers/oddsProvider.js</span>) is connected — same real mechanism already built and tested, just not wired to a live key in this environment.</div>
+        </div>
       </div>
       <div class="pick-line">
         <span class="market-name">Total</span>
         <span class="call good">Lean Under</span>
         <span class="price num">36.5</span>
       </div>
-      <p class="reasoning">Spreads are the primary weekly signal here, and this one's a pass: the model panel at OddsShopper leans Arizona (-125 ML, 55.6% implied), but the Kalshi prediction market has it a near coin flip (51¢ Carolina) — that split is a QB2-battle question, not a real edge, so no side gets thrown out just because a line exists. The one lean we will make: preseason unders have historically outhit overs league-wide, since backup-heavy offenses are sloppier than a 36.5 total assumes. Exhibition opener, minimal signal — treat as a market snapshot. No book-shopping widget below either — that only shows up once we're actually on a side; there's nothing to shop for on a pass.</p>
+      <p class="reasoning">Spreads are the primary weekly signal here, and this one's a pass: the model panel at OddsShopper leans Arizona (-125 ML, 55.6% implied), but the Kalshi prediction market has it a near coin flip (51¢ Carolina) — that split is a QB2-battle question, not a real edge, so no side gets thrown out just because a line exists. The one lean we will make: preseason unders have historically outhit overs league-wide, since backup-heavy offenses are sloppier than a 36.5 total assumes. Exhibition opener, minimal signal — treat as a market snapshot. Tap the spread above to see the book-by-book breakdown we do have.</p>
       <div class="props-note"><b>Props watch, not picks yet:</b> real backup-QB reps for CAR (post-Bryce-Young competition) and ARI's WR3/4 battle are the actual storylines here — prop books rarely post full player menus for the HOF Game. Full weekly player props start landing here from Preseason Week 1 (Aug 13–15) onward.</div>
     </div>
   </section>
@@ -940,9 +967,16 @@
         <span class="matchup"><span data-team="SJSU">San Jose State</span> @ <span data-team="USC">USC</span></span>
         <span class="when">Week 0 · LA Memorial Coliseum · Sat Aug 29 · NBC/Peacock</span>
       </div>
-      <div class="spread-block">
-        <div><div class="lbl">Spread — no lean, market number only</div><div class="call">USC -35.5</div></div>
-        <span class="price num">-110</span>
+      <div class="spread-block" role="button" tabindex="0" aria-expanded="false" data-compare="usc-spread">
+        <div><div class="lbl">Spread — no lean, market number only · <span class="tap-hint">tap to compare books</span></div><div class="call">USC -35.5</div></div>
+        <div class="price-col"><span class="price num">-110</span><span class="chev">▾</span></div>
+      </div>
+      <div class="book-compare" id="usc-spread">
+        <div class="book-compare-inner">
+          <div class="bc-title">USC -35.5 by book</div>
+          <div class="bc-row"><span class="bc-book">Market consensus (most books)</span><span class="bc-price num">-110</span></div>
+          <div class="bc-note">No individual per-book breakdown sourced for this one — a 35.5-point Week 0 blowout against a heavy underdog doesn't get much distinct book-to-book coverage worth searching for. Same mechanism as every other pick here: connect a live odds feed and this fills in with real DraftKings/FanDuel/Fanatics/BetMGM/BetRivers/Bet365 prices automatically.</div>
+        </div>
       </div>
       <div class="pick-line">
         <span class="market-name">Total</span>
@@ -1089,6 +1123,20 @@
     }, { threshold: 0.4 });
     countEls.forEach(function (el) { io2.observe(el); });
   }
+
+  // ---- Click-to-compare: tap a pick's odds to see the per-book breakdown ----
+  document.querySelectorAll('[data-compare]').forEach(function (trigger) {
+    var panel = document.getElementById(trigger.dataset.compare);
+    if (!panel) return;
+    function toggle() {
+      var open = panel.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    trigger.addEventListener('click', toggle);
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  });
 
   // ---- Page-tab transitions: panel snap-in + football flyby ----
   var football = document.getElementById('football-fly');
