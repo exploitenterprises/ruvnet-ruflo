@@ -1,4 +1,4 @@
-# NFL Edge — The Board (Kickoff Week Edition)
+# Red Hot Locks — The Board (Kickoff Week Edition)
 
 _Generated 2026-08-01 · Edition: market research (no games played yet — Elo engine has nothing to
 update on yet, see nfl-betting/README.md). Published as an app-style Artifact; this file is the
