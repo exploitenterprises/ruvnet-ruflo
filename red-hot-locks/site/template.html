@@ -1,0 +1,450 @@
+<!--
+  ADMIN SETUP — read this before launch:
+  1. Stripe: create a Product + a Payment Link in your Stripe Dashboard for each
+     tier (Daily/Weekly/Monthly/Season), then paste the 4 URLs into
+     STRIPE_PAYMENT_LINKS below. Until filled in, the Buy buttons show an
+     honest "checkout coming online soon" notice instead of a broken link.
+  2. Set each Payment Link's redirect-after-payment URL to wherever you want
+     buyers sent post-purchase (a thank-you page / delivery instructions).
+  3. Pick delivery isn't automated by this page (a static page can't gate
+     content) — decide how buyers actually receive picks (email list, private
+     Discord, member-gated page) and update the FAQ answer + post-purchase
+     instructions accordingly before you take real money.
+  4. Have the Terms/Privacy/Refund copy below reviewed by a lawyer before
+     launch — it's solid starter language, not legal advice.
+-->
+<title>Red Hot Locks — NFL &amp; College Football Picks</title>
+<style>
+  @font-face { font-family: 'IBM Plex Serif'; src: url(data:font/ttf;base64,{{FONT_PLEXSERIF_REG}}) format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'IBM Plex Serif'; src: url(data:font/ttf;base64,{{FONT_PLEXSERIF_BOLD}}) format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'IBM Plex Serif'; src: url(data:font/ttf;base64,{{FONT_PLEXSERIF_ITALIC}}) format('truetype'); font-weight: 400; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Outfit'; src: url(data:font/ttf;base64,{{FONT_OUTFIT_REG}}) format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Outfit'; src: url(data:font/ttf;base64,{{FONT_OUTFIT_BOLD}}) format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Red Hat Mono'; src: url(data:font/ttf;base64,{{FONT_REDHATMONO_REG}}) format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Red Hat Mono'; src: url(data:font/ttf;base64,{{FONT_REDHATMONO_BOLD}}) format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+
+  :root {
+    --ink: #f6f4f0; --ink-2: #ffffff; --surface: #ffffff; --surface-2: #f6f4f0; --surface-3: #ece8e0;
+    --line: #ddd6c8; --text: #1a1611; --text-dim: #6b6255;
+    --accent: #b8210f; --accent-ink: #ffffff; --accent-2: #a8720b;
+    --gold: #a8720b; --gold-2: #e0b03a;
+    --good: #0e8f68; --good-bg: #e4f6ef; --bad: #3e6690; --bad-bg: #e7eef6;
+    --radius: 12px;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #120d0a; --ink-2: #05060a; --surface: #1c1611; --surface-2: #221a14; --surface-3: #2c2219;
+      --line: #3a2e22; --text: #f6f1e8; --text-dim: #a89a85;
+      --accent: #ff4433; --accent-ink: #2a0402; --accent-2: #ffb238;
+      --gold: #e0b03a; --gold-2: #ffd876;
+      --good: #34d399; --good-bg: #12291f; --bad: #6e93bc; --bad-bg: #1a2433;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #120d0a; --ink-2: #05060a; --surface: #1c1611; --surface-2: #221a14; --surface-3: #2c2219;
+    --line: #3a2e22; --text: #f6f1e8; --text-dim: #a89a85;
+    --accent: #ff4433; --accent-ink: #2a0402; --accent-2: #ffb238;
+    --gold: #e0b03a; --gold-2: #ffd876;
+    --good: #34d399; --good-bg: #12291f; --bad: #6e93bc; --bad-bg: #1a2433;
+  }
+  :root[data-theme="light"] {
+    --ink: #f6f4f0; --ink-2: #ffffff; --surface: #ffffff; --surface-2: #f6f4f0; --surface-3: #ece8e0;
+    --line: #ddd6c8; --text: #1a1611; --text-dim: #6b6255;
+    --accent: #b8210f; --accent-ink: #ffffff; --accent-2: #a8720b;
+    --gold: #a8720b; --gold-2: #e0b03a;
+    --good: #0e8f68; --good-bg: #e4f6ef; --bad: #3e6690; --bad-bg: #e7eef6;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--ink); color: var(--text); font-family: 'Outfit', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .num { font-family: 'Red Hat Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  h1, h2, h3 { font-family: 'IBM Plex Serif', Georgia, serif; font-weight: 700; text-wrap: balance; margin: 0; }
+  .eyebrow { font-family: 'Red Hat Mono', monospace; font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+  section { padding: 72px 0; }
+  .lede { font-size: 17px; color: var(--text-dim); line-height: 1.65; max-width: 60ch; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- Nav ---------- */
+  .nav { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--ink) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; padding-bottom: 14px; }
+  .nav-brand { display: flex; align-items: center; gap: 8px; }
+  .nav-brand svg { width: 30px; height: 30px; }
+  .nav-brand span { font-family: 'IBM Plex Serif'; font-weight: 700; font-size: 19px; }
+  .nav-brand em { font-style: normal; color: var(--accent); }
+  .nav-links { display: flex; align-items: center; gap: 26px; }
+  .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 700; }
+  .nav-links a:hover { color: var(--text); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Outfit'; font-weight: 700; font-size: 14.5px; padding: 12px 22px; border-radius: 8px; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform .1s ease, filter .15s ease; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-block { width: 100%; }
+  @media (max-width: 720px) { .nav-links a:not(.btn) { display: none; } }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 84px 0 64px; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background:
+      radial-gradient(70% 60% at 15% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      radial-gradient(60% 50% at 100% 10%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 65%);
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; }
+  @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } }
+  .hero h1 { font-size: 46px; line-height: 1.08; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .lede { margin: 18px 0 28px; font-size: 18px; }
+  .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .trust-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--text-dim); background: var(--surface); border: 1px solid var(--line); padding: 7px 12px; border-radius: 999px; }
+
+  /* ---------- Teaser pick card ---------- */
+  .teaser-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; position: relative; box-shadow: 0 20px 50px -25px rgba(0,0,0,0.35); }
+  .teaser-card .tag { font-family: 'Red Hat Mono'; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+  .teaser-card .matchup { font-family: 'IBM Plex Serif'; font-weight: 700; font-size: 22px; margin-top: 6px; }
+  .teaser-lock {
+    margin-top: 16px; padding: 16px; border-radius: 9px; text-align: center;
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface-2));
+    border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--line));
+  }
+  .teaser-lock .pick-blur { font-family: 'IBM Plex Serif'; font-weight: 700; font-size: 24px; filter: blur(7px); user-select: none; color: var(--text); }
+  .teaser-lock p { margin: 10px 0 12px; font-size: 12.5px; color: var(--text-dim); }
+  .sample-note { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 10px; }
+
+  /* ---------- How it works ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 36px; }
+  @media (max-width: 780px) { .steps { grid-template-columns: 1fr; } }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .step .n { font-family: 'IBM Plex Serif'; font-weight: 700; font-size: 13px; color: var(--accent-ink); background: var(--accent); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .step h3 { font-size: 19px; margin: 14px 0 8px; }
+  .step p { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin: 0; }
+
+  /* ---------- Track record ---------- */
+  .tr-band { background: var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .tr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+  @media (max-width: 700px) { .tr-grid { grid-template-columns: 1fr; } }
+  .tr-tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; text-align: center; }
+  .tr-tile .lbl { font-family: 'Red Hat Mono'; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+  .tr-tile .score { font-family: 'IBM Plex Serif'; font-weight: 700; font-size: 38px; margin-top: 6px; }
+  .tr-tile .note { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .tr-honest { margin-top: 20px; padding: 16px 18px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
+  .tr-honest b { color: var(--text); }
+
+  /* ---------- Pricing ---------- */
+  .price-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 40px; align-items: stretch; }
+  @media (max-width: 980px) { .price-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .price-grid { grid-template-columns: 1fr; } }
+  .price-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 22px; position: relative; }
+  .price-card.featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 24px 50px -30px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .price-card.vip { background: linear-gradient(165deg, var(--surface), color-mix(in srgb, var(--gold) 8%, var(--surface))); border-color: color-mix(in srgb, var(--gold) 45%, var(--line)); }
+  .ribbon { position: absolute; top: -12px; left: 22px; background: var(--accent); color: var(--accent-ink); font-family: 'Red Hat Mono'; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; }
+  .ribbon.gold { background: linear-gradient(120deg, var(--gold), var(--gold-2)); color: #241a00; }
+  .price-card .tier { font-family: 'Red Hat Mono'; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+  .price-card .amount { font-family: 'IBM Plex Serif'; font-weight: 700; font-size: 40px; margin-top: 8px; }
+  .price-card .amount span { font-size: 15px; font-weight: 400; color: var(--text-dim); font-family: 'Outfit'; }
+  .price-card .desc { font-size: 13px; color: var(--text-dim); margin: 8px 0 18px; line-height: 1.5; min-height: 42px; }
+  .price-card ul { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-direction: column; gap: 9px; flex: 1; }
+  .price-card li { font-size: 13.5px; display: flex; gap: 8px; align-items: flex-start; }
+  .price-card li::before { content: "✓"; color: var(--good); font-weight: 700; flex: 0 0 auto; }
+
+  /* ---------- FAQ ---------- */
+  .faq-item { border-bottom: 1px solid var(--line); }
+  .faq-item summary { padding: 18px 0; font-family: 'IBM Plex Serif'; font-weight: 700; font-size: 16.5px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after { content: "+"; font-family: 'Outfit'; font-size: 22px; color: var(--accent); flex: 0 0 auto; }
+  .faq-item[open] summary::after { content: "–"; }
+  .faq-item p { margin: 0 0 18px; font-size: 14px; color: var(--text-dim); line-height: 1.65; max-width: 68ch; }
+
+  /* ---------- Legal / footer ---------- */
+  .legal-band { background: var(--ink-2); border-top: 1px solid var(--line); }
+  .legal-band h3 { font-size: 15px; margin-bottom: 8px; }
+  .legal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 24px; }
+  @media (max-width: 700px) { .legal-grid { grid-template-columns: 1fr; } }
+  .legal-grid p, .legal-grid li { font-size: 12.5px; color: var(--text-dim); line-height: 1.65; }
+  .legal-grid ul { padding-left: 18px; margin: 8px 0; }
+  .helpline { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-family: 'Red Hat Mono'; font-size: 12.5px; }
+  footer.site-foot { padding: 32px 0; text-align: center; }
+  footer.site-foot .socials { display: flex; justify-content: center; gap: 14px; margin-bottom: 14px; }
+  footer.site-foot .socials a { color: var(--text-dim); text-decoration: none; font-size: 13px; font-weight: 700; border: 1px solid var(--line); padding: 7px 14px; border-radius: 999px; }
+  footer.site-foot .socials a:hover { color: var(--accent); border-color: var(--accent); }
+  footer.site-foot .copy { font-size: 11.5px; color: var(--text-dim); }
+
+  .section-head { max-width: 640px; margin: 0 auto 8px; text-align: center; }
+  .section-head.left { text-align: left; margin: 0 0 8px; }
+  .center { text-align: center; }
+</style>
+
+<nav class="nav">
+  <div class="wrap">
+    <div class="nav-brand">
+      <svg viewBox="0 0 140 124" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Red Hot Locks logo">
+        <g stroke="#ffb238" stroke-width="2.5" fill="none" opacity="0.55" stroke-linecap="round">
+          <path d="M96,40 Q88,44 96,50" /><path d="M92,50 Q84,54 92,60" /><path d="M96,60 Q88,64 96,70" />
+        </g>
+        <g stroke="#7a1f10" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M58,95 L47,110 L39,115" /><path d="M70,93 L82,106 L92,112" />
+          <path d="M57,62 L40,73 L30,68" /><path d="M92,56 L109,42 L118,53" />
+        </g>
+        <g fill="#ffb238">
+          <path d="M46,96 C49,91 51,91 49,85 C54,90 56,95 49,101 C45,99 43,99 46,96 Z" />
+          <path d="M56,100 C58,97 59,96 58,92 C61,95 62,98 58,102 C55,101 54,101 56,100 Z" />
+        </g>
+        <path d="M72,10 L86,10 L83,22 L75,22 Z" fill="#3c7a3f" stroke="#2a0402" stroke-width="2.5" stroke-linejoin="round" />
+        <path d="M76,20 C94,20 102,40 94,60 C88,76 72,94 56,100 C48,103 42,98 45,90 C52,72 44,57 52,44 C58,34 64,22 76,20 Z" fill="#d0271b" stroke="#2a0402" stroke-width="3.5" stroke-linejoin="round" />
+        <g fill="#2a0402"><circle cx="70" cy="44" r="3.4" /><circle cx="82" cy="40" r="3.4" /></g>
+        <g stroke="#2a0402" stroke-width="3" stroke-linecap="round"><path d="M65,38 L73,35" /><path d="M78,32 L88,35" /></g>
+        <ellipse cx="76" cy="54" rx="4.2" ry="5.2" fill="#2a0402" />
+        <g transform="rotate(-25 122 52)">
+          <ellipse cx="122" cy="52" rx="11" ry="7" fill="#7b4b2a" stroke="#2a0402" stroke-width="2" />
+          <line x1="114" y1="52" x2="130" y2="52" stroke="#f4ede1" stroke-width="1.5" />
+        </g>
+      </svg>
+      <span>Red <em>Hot</em> Locks</span>
+    </div>
+    <div class="nav-links">
+      <a href="#picks">Sample Pick</a>
+      <a href="#how">How It Works</a>
+      <a href="#record">Track Record</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#pricing" class="btn btn-primary">Get Picks</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">NFL &amp; College Football · Est. Aug 2026</p>
+      <h1>We show our <em>work</em>.<br>Then we show our <em>picks</em>.</h1>
+      <p class="lede">Spread-first picks and player props for NFL and College Football, built from
+        real matchup data — power ratings, weather, injuries, line movement — not vibes. Every
+        pick we sell is logged publicly and graded, win or lose.</p>
+      <div class="hero-ctas">
+        <a href="#pricing" class="btn btn-primary">See Packages</a>
+        <a href="#how" class="btn btn-ghost">How We Find Value</a>
+      </div>
+      <div class="trust-row">
+        <span class="trust-chip">🔒 Every pick logged &amp; graded</span>
+        <span class="trust-chip">🏈 NFL + College Football</span>
+        <span class="trust-chip">📊 No-vig market analysis</span>
+        <span class="trust-chip">🌶️ Fresh drops Tue / Thu / Sat</span>
+      </div>
+    </div>
+    <div id="picks">
+      <div class="teaser-card">
+        <span class="tag">Sample pick format</span>
+        <div class="matchup">Panthers @ Cardinals</div>
+        <div class="teaser-lock">
+          <div class="pick-blur num">Cardinals -1.5</div>
+          <p>This is an example of how a locked pick looks pre-purchase — not this week's real line. Real picks post live once you're in.</p>
+          <a href="#pricing" class="btn btn-primary btn-block">Unlock This Week's Picks</a>
+        </div>
+        <p class="sample-note">Want the real board free, right now? <a href="https://claude.ai/code/artifact/c444fca9-6ec5-4f0e-bdc6-424399a3349b" target="_blank" rel="noopener">View our public futures &amp; news board →</a></p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head center">
+      <p class="eyebrow">How It Works</p>
+      <h2>No hunches. No hype. Just the process.</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="n">1</span>
+        <h3>We track everything</h3>
+        <p>Live odds, injuries, weather, coaching moves, and the transfer portal / trade wire — every day, both leagues, no gaps.</p>
+      </div>
+      <div class="step">
+        <span class="n">2</span>
+        <h3>The model finds the gaps</h3>
+        <p>Elo-based power ratings and matchup projections get checked against the no-vig market price. We only care where the two disagree.</p>
+      </div>
+      <div class="step">
+        <span class="n">3</span>
+        <h3>You get the picks</h3>
+        <p>Spread picks first — that's the primary read every week — plus player props and a moneyline when we genuinely like one. No cap on how many we surface.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="record" class="tr-band">
+  <div class="wrap">
+    <div class="section-head center">
+      <p class="eyebrow">Track Record</p>
+      <h2>Nothing hidden. Nothing cherry-picked.</h2>
+    </div>
+    <div class="tr-grid">
+      <div class="tr-tile"><div class="lbl">Overall</div><div class="score num">0–0</div><div class="note">no graded picks yet</div></div>
+      <div class="tr-tile"><div class="lbl">Spreads</div><div class="score num">0–0</div><div class="note">—</div></div>
+      <div class="tr-tile"><div class="lbl">Player Props</div><div class="score num">0–0</div><div class="note">—</div></div>
+    </div>
+    <div class="tr-honest"><b>We just launched.</b> That 0–0 is real, not a bug — every pick we make from here gets logged and graded automatically, wins and losses both, on our public board. We'd rather show you an honest 0–0 than a made-up hot streak.</div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="section-head center">
+      <p class="eyebrow">Packages</p>
+      <h2>Pick your access level.</h2>
+      <p class="lede center" style="margin:14px auto 0;">Cancel the monthly plan anytime. Daily, Weekly, and Season are one-time — no subscription to remember to cancel.</p>
+    </div>
+    <div class="price-grid">
+
+      <div class="price-card">
+        <div class="tier">Daily Pass</div>
+        <div class="amount num">$9.99</div>
+        <p class="desc">One game day. Every spread pick and player prop we're on, no commitment.</p>
+        <ul>
+          <li>Full slate for one day (NFL or CFB)</li>
+          <li>Spread picks + player props</li>
+          <li>Moneyline calls when we like one</li>
+        </ul>
+        <a href="#" class="btn btn-ghost btn-block" data-stripe="daily">Get Today's Picks</a>
+      </div>
+
+      <div class="price-card featured">
+        <span class="ribbon">Most Popular</span>
+        <div class="tier">Weekly Pack</div>
+        <div class="amount num">$24.99</div>
+        <p class="desc">Every drop this week — Tuesday, Thursday, Saturday — spreads, props, and our parlay of the week.</p>
+        <ul>
+          <li>All 3 drops this week, both leagues</li>
+          <li>Spread picks + player props</li>
+          <li>Weekly parlay build, explained</li>
+          <li>Line-movement alerts on our picks</li>
+        </ul>
+        <a href="#" class="btn btn-primary btn-block" data-stripe="weekly">Get This Week</a>
+      </div>
+
+      <div class="price-card">
+        <div class="tier">Monthly All-Access</div>
+        <div class="amount num">$59.99<span>/mo</span></div>
+        <p class="desc">Everything, every week, all season. Cancel anytime.</p>
+        <ul>
+          <li>Every drop, all season long</li>
+          <li>NFL + College Football, full coverage</li>
+          <li>Spreads, props, moneylines, parlays</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <a href="#" class="btn btn-ghost btn-block" data-stripe="monthly">Go All-Access</a>
+      </div>
+
+      <div class="price-card vip">
+        <span class="ribbon gold">Best Value</span>
+        <div class="tier">Season VIP</div>
+        <div class="amount num">$299</div>
+        <p class="desc">Lock in the full NFL + CFB season at one price. One-time payment.</p>
+        <ul>
+          <li>Full season, every pick, every prop</li>
+          <li>Priority access on drop days</li>
+          <li>Season-long parlay tracker</li>
+          <li>Locked price — no monthly billing</li>
+        </ul>
+        <a href="#" class="btn btn-ghost btn-block" data-stripe="season">Lock In Season VIP</a>
+      </div>
+
+    </div>
+    <p id="checkout-note" class="center" style="display:none; margin-top:18px; font-size:13px; color:var(--text-dim);">Checkout is coming online soon — we're finishing payment setup. Check back shortly.</p>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap" style="max-width: 760px;">
+    <div class="section-head center">
+      <p class="eyebrow">FAQ</p>
+      <h2>Straight answers.</h2>
+    </div>
+    <div style="margin-top: 30px;">
+      <details class="faq-item">
+        <summary>Do you guarantee winners?</summary>
+        <p>No — and anyone who does is lying to you. Nobody hits 100%, in any sport, ever. What we do guarantee: every pick we sell gets logged on our public track record and graded honestly, win or lose. You can watch the record build in real time.</p>
+      </details>
+      <details class="faq-item">
+        <summary>What sports do you cover?</summary>
+        <p>NFL and College Football. Spread picks are the primary weekly read for both leagues, plus player props and a moneyline call when we genuinely like one.</p>
+      </details>
+      <details class="faq-item">
+        <summary>How do I get my picks after I pay?</summary>
+        <p>You'll get delivery instructions immediately after checkout. We're finalizing the exact delivery channel (email / private group) — full details land on your receipt.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Can I cancel anytime?</summary>
+        <p>Monthly All-Access is a subscription you can cancel whenever you want. Daily, Weekly, and Season VIP are one-time purchases, not subscriptions — there's nothing to cancel.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Is this legal?</summary>
+        <p>Yes. We sell sports analysis and opinion — we're not a sportsbook and we don't accept wagers. You must be of legal gambling age in your jurisdiction to purchase. See the Responsible Gambling notice below.</p>
+      </details>
+      <details class="faq-item">
+        <summary>What's your refund policy?</summary>
+        <p>Because picks are delivered digitally and immediately, purchases are final once that period's picks have been sent. If something on our end went wrong (you didn't receive picks you paid for), contact us and we'll make it right.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="legal-band">
+  <div class="wrap">
+    <div class="legal-grid">
+      <div>
+        <h3>Responsible Gambling</h3>
+        <p>Red Hot Locks provides sports analysis and picks for informational and entertainment
+          purposes only. We do not accept wagers, and no purchase from us is a bet. No guarantee of
+          profit or winning outcomes is made or implied. You must be 21+ or the legal gambling age
+          in your jurisdiction to purchase. Sports betting is illegal in some jurisdictions — it's
+          on you to know your local laws.</p>
+        <span class="helpline">📞 1-800-GAMBLER · <a href="https://www.ncpgambling.org" target="_blank" rel="noopener">ncpgambling.org</a></span>
+      </div>
+      <div>
+        <h3>Terms &amp; Privacy</h3>
+        <p>Purchases grant access to that package's picks content for personal use only —
+          redistribution or resale isn't permitted. We collect only what's needed to process your
+          order and deliver picks (handled by our payment processor; we don't store card details
+          ourselves). Full Terms of Service and Privacy Policy: <a href="mailto:hello@redhotlocks.example">contact us</a> for the current versions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="socials">
+      <a href="#" target="_blank" rel="noopener">TikTok</a>
+      <a href="#" target="_blank" rel="noopener">X</a>
+    </div>
+    <p class="copy">🌶️ Red Hot Locks — for entertainment purposes only. Must be of legal gambling age. Gamble responsibly.</p>
+  </div>
+</footer>
+
+<script>
+  // Fill these in from your Stripe Dashboard → Payment Links. Leave blank to
+  // show the "checkout coming soon" notice instead of a dead link.
+  const STRIPE_PAYMENT_LINKS = {
+    daily: '',
+    weekly: '',
+    monthly: '',
+    season: '',
+  };
+  document.querySelectorAll('[data-stripe]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      const url = STRIPE_PAYMENT_LINKS[el.dataset.stripe];
+      if (url) return; // real Stripe Payment Link — let the browser navigate
+      e.preventDefault();
+      document.getElementById('checkout-note').style.display = 'block';
+      document.getElementById('checkout-note').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+</script>
