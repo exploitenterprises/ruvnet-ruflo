@@ -7,3 +7,6 @@ data/cache/*.json
 # refresh ARE committed for history — only the CLI's own naming pattern is ignored.
 reports/week-*.md
 reports/week-*.json
+# board/build.mjs output — derived from template.html + inlined fonts,
+# regenerate with `node build.mjs`, never committed (same as red-hot-locks/site).
+board/nfl-edge.html
