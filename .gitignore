@@ -44,8 +44,10 @@ claude-flow.config.json
 *.temp
 .cache/
 
-# Trading pipeline runtime state (regenerated every scan cycle)
-trading/data/
+# Trading pipeline: journal.json is real accumulated trade history, keep it
+# tracked. dashboard.html and per-cycle scratch inputs are fully regenerated
+# from journal.json each run, so those stay ignored.
+trading/data/cycle_input*.json
 trading/dashboard.html
 __pycache__/
 *.pyc

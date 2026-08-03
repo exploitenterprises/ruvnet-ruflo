@@ -29,6 +29,12 @@
       "value": "skipped: Crypto.com and Stocktwits MCP connectors disconnected at fire time, no data available to scan",
       "namespace": "default",
       "timestamp": 1785726719168
+    },
+    {
+      "key": "dashboard_artifact_url",
+      "value": "https://claude.ai/code/artifact/14646a14-4b3a-4622-9b77-34e388d2a2fc",
+      "namespace": "default",
+      "timestamp": 1785729152170
     }
   ]
 }
