@@ -27,6 +27,19 @@ are sport-agnostic). Two things are deliberately different:
   7-seed structure that doesn't map onto a 130+-team field with a 12-team
   CFP (5 conference-champion auto bids + 7 at-large). That's a real
   follow-up project, not something to fake with a simplified stand-in.
+- **Second opinion (Hermes)** (`src/providers/hermesProvider.js`,
+  `src/analysis/secondOpinion.js`) — an independent cross-check on a pick
+  from a Nous Research Hermes model, called via Nous's own OpenAI-compatible
+  inference API (`inference-api.nousresearch.com/v1`), not the separate
+  "Hermes Agent" CLI product. It's a second *judgment*, not a data source —
+  fed the same matchup facts and our pick/reasoning, asked to form an
+  independent view and say whether it agrees. Never overrides the in-house
+  model; the board is meant to show both and flag disagreement. Needs
+  `HERMES_API_KEY` (sign up free at
+  <https://portal.nousresearch.com/manage-subscription>) in `nfl-betting/.env`,
+  plus `inference-api.nousresearch.com` on this environment's network
+  egress allowlist (see the CFBD section below for the general pattern).
+  Defaults to the Hermes-4-70B tier; override with `HERMES_MODEL` in `.env`.
 - **Live CFB data** (`src/providers/cfbdProvider.js`) pulls team stats,
   talent composite, schedule, and lines from
   [collegefootballdata.com](https://collegefootballdata.com) — free key at
@@ -72,6 +85,9 @@ providers/            live data in                 analysis/                 rep
 ├─────────────────┤
 │ cfbdProvider    │ CFB stats/lines/talent ─▶ needs CFBD_API_KEY (see below)
 │ (collegefootballdata.com)
+├─────────────────┤
+│ hermesProvider  │ 2nd-opinion judgment ───▶ needs HERMES_API_KEY (see below)
+│ (Nous Research) │                          not a data source — see secondOpinion.js
 └─────────────────┘
 ```
 
