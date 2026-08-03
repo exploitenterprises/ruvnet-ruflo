@@ -27,6 +27,20 @@ are sport-agnostic). Two things are deliberately different:
   7-seed structure that doesn't map onto a 130+-team field with a 12-team
   CFP (5 conference-champion auto bids + 7 at-large). That's a real
   follow-up project, not something to fake with a simplified stand-in.
+- **Live CFB data** (`src/providers/cfbdProvider.js`) pulls team stats,
+  talent composite, schedule, and lines from
+  [collegefootballdata.com](https://collegefootballdata.com) — free key at
+  <https://collegefootballdata.com/key>. Set it in `nfl-betting/.env`
+  (git-ignored, never commit it):
+  ```
+  CFBD_API_KEY=your-key-here
+  ```
+  then run with `node --env-file=.env cli.js ...`. In a sandboxed dev
+  environment (like Claude Code's remote containers), outbound calls to
+  `api.collegefootballdata.com` may need to be added to that environment's
+  network egress allowlist before this works — same for `api.the-odds-api.com`,
+  `site.api.espn.com`, and `api.open-meteo.com` if those show a "host not in
+  allowlist" error. That's an environment setting, not a code or key problem.
 
 > **This is a research/decision-support tool, not financial advice.** Sports
 > betting outcomes are inherently uncertain; the model can and will be wrong.
@@ -49,10 +63,15 @@ providers/            live data in                 analysis/                 rep
 │ (ESPN, no key)  │                          │ matchupEngine           │──▶ weekly
 ├─────────────────┤                          │ weatherImpact           │    Markdown
 │ weatherProvider │ forecast ───────────────▶│ schemeTendencies        │    + JSON
-│ (Open-Meteo)    │                          │ valueFinder             │    report
-├─────────────────┤                          │ futures (Monte Carlo)   │
-│ oddsProvider    │ sportsbook lines ───────▶ │ probability / statMath  │
-│ (The Odds API)  │                          └─────────────────────────┘
+│ (Open-Meteo)    │                          │ positionMatchup (NGS)   │    report
+├─────────────────┤                          │ valueFinder             │
+│ oddsProvider    │ sportsbook lines ───────▶ │ futures (Monte Carlo)   │
+│ (The Odds API)  │                          │ probability / statMath  │
+├─────────────────┤                          └─────────────────────────┘
+│ nflverseProvider│ Next Gen Stats ─────────▶ no key needed, GitHub-hosted
+├─────────────────┤
+│ cfbdProvider    │ CFB stats/lines/talent ─▶ needs CFBD_API_KEY (see below)
+│ (collegefootballdata.com)
 └─────────────────┘
 ```
 
@@ -68,8 +87,25 @@ providers/            live data in                 analysis/                 rep
   combining (a) the Elo win probability, (b) an opponent-adjusted
   offense-vs-defense point projection built from each team's home/away
   scoring splits, (c) a pass-rush-vs-pass-protection scheme mismatch signal,
-  (d) tempo (pace), and (e) weather. This is the "offense vs. defense,
-  position group vs. position group" matchup evaluation.
+  (d) an optional Next Gen Stats position-group edge (see below), (e) tempo
+  (pace), and (f) weather. This is the "offense vs. defense, position group
+  vs. position group" matchup evaluation.
+- **Position matchups / Next Gen Stats** (`positionMatchup.js`, fed by
+  `providers/nflverseProvider.js`) — turns real NFL Next Gen Stats (receiver
+  separation/YAC, QB time-to-throw/CPOE, RB rush yards over expected) into a
+  recency-weighted index per team/position (`computeWeightedHistory`
+  defaults to a 50/30/20 weighting across the 3 most recent seasons a team
+  has data for), then compares it against the opponent as a >1-favors-offense
+  ratio the same way `schemeTendencies.passRushMismatch` does. **Honest
+  limit**: there's no free public defensive-player tracking data (coverage
+  grades, separation allowed by a specific corner) — this can only
+  characterize the strength/trend of the offense's skill positions, not a
+  true two-sided "this WR corps vs. this specific CB" matchup. Sourced from
+  [nflverse](https://github.com/nflverse/nflverse-data) (community
+  republication of official NGS numbers as downloadable files) — no API key
+  or OAuth needed, and it's the one live-data source confirmed to work from
+  this project's sandboxed dev environment when most sports-data APIs are
+  network-blocked.
 - **Scheme tendencies** (`schemeTendencies.js`) — "coach scheme" signal
   derived *empirically* from each team's own play-calling data (tempo, pass
   rate, sack rates, 4th-down aggressiveness) relative to league average,

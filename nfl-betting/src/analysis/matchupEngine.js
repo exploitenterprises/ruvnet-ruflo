@@ -1,6 +1,7 @@
 import { matchupWinProbability, winProbToSpread } from './powerRatings.js';
 import { computeSchemeTendencies, passRushMismatch } from './schemeTendencies.js';
 import { weatherAdjustment } from './weatherImpact.js';
+import { positionMatchupEdge } from './positionMatchup.js';
 
 // Ratio-based unit projection: expected points a unit produces/allows relative
 // to league average, in the style of a simplified opponent-adjusted efficiency
@@ -21,6 +22,9 @@ export function projectGame({
   weather, // raw forecast, or null/undefined for dome
   neutralSite = false,
   coachNotes = {}, // optional manual overrides keyed by team abbr, see data/coach-notes.json
+  ngsEdges = {}, // optional Next Gen Stats position-group edges (see positionMatchup.js) —
+  // { homeReceivingEdge, awayReceivingEdge, homeRushingEdge, awayRushingEdge }, each a
+  // positionMatchupEdge() ratio (>1 favors the offense). Omit any/all to skip that adjustment.
 }) {
   const eloWinProb = matchupWinProbability({ homeRating: home.rating, awayRating: away.rating, neutralSite });
   const eloSpread = winProbToSpread(eloWinProb); // home margin implied by Elo
@@ -52,6 +56,17 @@ export function projectGame({
   const awayPassPenalty = clamp((awayPassPressure - 1) * 0.04, -0.08, 0.08);
   homePointsEst *= 1 - homePassPenalty;
   awayPointsEst *= 1 - awayPassPenalty;
+
+  // Next Gen Stats position-group edge (receiving/rushing skill vs. the
+  // opponent's points-allowed proxy — see positionMatchup.js for the honest
+  // scope limit: no free defensive-tracking data exists, so this is a
+  // one-sided offensive-strength signal, not a true two-way coverage matchup).
+  // Capped the same way as the pass-rush mismatch so no single signal can
+  // swing the projection more than a few points.
+  const homeNgsEdge = combineNgsEdges(ngsEdges.homeReceivingEdge, ngsEdges.homeRushingEdge);
+  const awayNgsEdge = combineNgsEdges(ngsEdges.awayReceivingEdge, ngsEdges.awayRushingEdge);
+  homePointsEst *= 1 + clamp((homeNgsEdge - 1) * 0.06, -0.06, 0.06);
+  awayPointsEst *= 1 + clamp((awayNgsEdge - 1) * 0.06, -0.06, 0.06);
 
   // Tempo (pace) affects total scoring opportunities for both teams roughly evenly.
   const paceMultiplier = (homeScheme.paceIndex + awayScheme.paceIndex) / 2;
@@ -86,9 +101,26 @@ export function projectGame({
     weatherNotes: wx.notes,
     schemeNotes: [
       ...describeSchemeEdges(home.abbr, away.abbr, homeScheme, awayScheme),
+      ...describeNgsEdges(home.abbr, away.abbr, homeNgsEdge, awayNgsEdge),
       ...manualCoachNotes(home.abbr, away.abbr, coachNotes),
     ],
   };
+}
+
+// Averages whichever NGS edges were supplied (receiving, rushing) into one
+// offense-side multiplier; missing edges (no data for that position group)
+// don't drag the average toward 1, they're just excluded.
+function combineNgsEdges(...edges) {
+  const present = edges.filter((e) => e != null && Number.isFinite(e));
+  if (present.length === 0) return 1;
+  return present.reduce((s, e) => s + e, 0) / present.length;
+}
+
+function describeNgsEdges(homeAbbr, awayAbbr, homeNgsEdge, awayNgsEdge) {
+  const notes = [];
+  if (homeNgsEdge > 1.1) notes.push(`${homeAbbr}'s skill-position tracking data (separation/YAC/rush efficiency) grades above average vs. this defense — Next Gen Stats, multi-year weighted`);
+  if (awayNgsEdge > 1.1) notes.push(`${awayAbbr}'s skill-position tracking data (separation/YAC/rush efficiency) grades above average vs. this defense — Next Gen Stats, multi-year weighted`);
+  return notes;
 }
 
 // Qualitative overrides a human has entered (e.g. a new OC installing a

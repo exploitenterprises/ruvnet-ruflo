@@ -72,6 +72,20 @@ shimmer, and a football-flyby transition on page-tab changes. Everything
 respects `prefers-reduced-motion` — check the CSS media query and the `reduceMotion`
 JS flag before adding new motion.
 
+## Position matchups (Next Gen Stats)
+
+Game-pick matchup notes can include a Next Gen Stats-derived edge
+("skill-position tracking data grades above average vs. this defense") —
+sourced from `nfl-betting/src/analysis/positionMatchup.js`, which blends a
+team's real NGS receiving/rushing numbers across recent seasons (recency-weighted,
+most recent season counted highest) into a mismatch ratio against the
+opponent. Wired into `matchupEngine.js` as the optional `ngsEdges` param, so
+it never breaks a projection that doesn't supply it. **Scope limit that must
+stay documented wherever this appears**: there's no free public
+defensive-player tracking data, so this only measures offensive skill-position
+strength/trend — not a real two-sided "these receivers vs. that specific
+cornerback" matchup.
+
 ## Mascot
 
 `#chili-mascot` is an SVG `<symbol>` defined once and reused via `<use>` for
