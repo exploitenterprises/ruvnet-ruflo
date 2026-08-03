@@ -86,6 +86,26 @@ defensive-player tracking data, so this only measures offensive skill-position
 strength/trend — not a real two-sided "these receivers vs. that specific
 cornerback" matchup.
 
+## Data sourcing standard for pick reasoning
+
+Every pick card's `.reasoning` text (and the CFB/NFL matchup notes generally)
+must be grounded in one of two legitimate tiers — never invented certainty:
+
+1. **Model math** — always safe to state plainly, it's genuinely computed:
+   power-rating differential, `matchupEngine.js`'s projected spread/total,
+   `schemeTendencies.js`'s pass-rush/pace mismatch notes, `weatherImpact.js`'s
+   notes, and `positionMatchup.js`'s Next Gen Stats position-group edge.
+2. **Cited research** — WebSearch results, named by source inline, only when
+   that source actually returned the claim this run.
+
+Confirmed by direct testing (Aug 2026): CFB Graphs, CFBDepth, PEARatings,
+RotoWire's tool pages, Tracking Football, CFBstats, and DraftEdge all return
+HTTP 403 to WebFetch on every page tested, including specific articles —
+bot-protection, not a missing API key. Don't retry WebFetch on sites like
+these. WebSearch scoped to those domains can still surface useful headline
+snippets — cite them by name when genuinely returned, never fabricate a
+stat table or matchup grade attributed to one of these sites.
+
 ## Mascot
 
 `#chili-mascot` is an SVG `<symbol>` defined once and reused via `<use>` for
