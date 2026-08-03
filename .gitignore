@@ -44,6 +44,12 @@ claude-flow.config.json
 *.temp
 .cache/
 
+# Trading pipeline runtime state (regenerated every scan cycle)
+trading/data/
+trading/dashboard.html
+__pycache__/
+*.pyc
+
 package
 test-init
 test-full-init
