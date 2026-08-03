@@ -17,6 +17,12 @@
       "value": "This is a test value",
       "namespace": "default",
       "timestamp": 1749614834714
+    },
+    {
+      "key": "consensus_20260803T025338Z",
+      "value": "ADAUSD/ADAUSDT, +9.1% gain, $10.2M combined 24h volume (top 5 of all spot pairs by volume), corroborated by Stocktwits (#1 trending crypto, 128829 watchers). Secondary: AVAXUSDT +5.5% gain, $328K volume, also on Stocktwits trending (#2).",
+      "namespace": "default",
+      "timestamp": 1785725623471
     }
   ]
 }
