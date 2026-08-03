@@ -243,7 +243,17 @@
   .pill { font-family: 'Red Hat Mono'; font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; }
   .pill.fav { background: var(--surface-3); color: var(--text-dim); }
   .pill.value { background: var(--good-bg); color: var(--good); }
+  .pill.pick { background: var(--accent); color: #fff; font-weight: 700; }
+  .cfb-theme .pill.pick { background: var(--accent-cfb); }
+  .div-card.our-pick { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  .cfb-theme .div-card.our-pick { border-color: color-mix(in srgb, var(--accent-cfb) 45%, var(--line)); background: color-mix(in srgb, var(--accent-cfb) 6%, var(--surface)); }
   .div-card .angle { margin: 9px 0 0; font-size: 12.5px; color: var(--text-dim); line-height: 1.45; padding-top: 8px; border-top: 1px dashed var(--line); }
+
+  /* ---------- Rail "our pick" badge ---------- */
+  .sb-card.our-pick { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+  .cfb-theme .sb-card.our-pick { border-color: var(--accent-cfb); background: color-mix(in srgb, var(--accent-cfb) 8%, var(--surface)); }
+  .sb-card .pick-badge { position: absolute; top: 10px; right: 10px; font-family: 'Red Hat Mono'; font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--accent); color: #fff; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
+  .cfb-theme .sb-card .pick-badge { background: var(--accent-cfb); }
 
   /* ---------- Methodology / footer ---------- */
   .info-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 4px; }
@@ -285,52 +295,29 @@
 
   /* The spread is the primary weekly signal — boxed and colored so it reads
      first. Moneyline only appears when the model has real separation from
-     the market, styled as a secondary "also like" callout, not co-equal. */
+     the market, styled as a secondary "also like" callout, not co-equal.
+     This is our pick, stated plainly — not a sportsbook price-shopping
+     widget (removed Aug 2026: the app states one recommendation per market,
+     not a ranked list of who has the best odds). */
   .spread-block {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    margin-top: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; user-select: none;
+    margin-top: 12px; padding: 10px 12px; border-radius: 8px;
     background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
     border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
-    transition: background .15s ease, transform .15s cubic-bezier(.34,1.56,.64,1);
   }
-  .spread-block:hover { background: color-mix(in srgb, var(--accent) 16%, var(--surface-2)); transform: translateY(-1px); }
-  .spread-block:active { transform: translateY(0) scale(0.99); }
   .spread-block .lbl { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
-  .spread-block .lbl .tap-hint { color: var(--accent); }
   .spread-block .call { font-family: 'Erica One'; font-size: 19px; text-transform: uppercase; color: var(--accent); margin-top: 2px; }
   .spread-block .price-col { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
   .spread-block .price { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text); }
-  .spread-block .chev { font-size: 11px; color: var(--text-dim); transition: transform .25s cubic-bezier(.34,1.56,.64,1); }
-  .spread-block[aria-expanded="true"] .chev { transform: rotate(180deg); }
 
-  /* ---------- Click-to-compare book panel ---------- */
-  .book-compare { max-height: 0; overflow: hidden; transition: max-height .35s cubic-bezier(.16,1,.3,1); }
-  .book-compare.open { max-height: 400px; }
-  .book-compare-inner { margin-top: 8px; padding: 12px; border-radius: 8px; background: var(--surface-2); border: 1px dashed var(--line); }
-  .book-compare-inner .bc-title { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
-  .bc-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--line); }
-  .bc-row:first-of-type { border-top: none; }
-  .bc-row .bc-book { font-weight: 700; font-size: 13px; }
-  .bc-row .bc-price { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text); }
-  .bc-row.bc-best .bc-price { color: var(--good); }
-  .bc-note { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
-
-  /* ---------- Book comparison (best odds / best EV) ---------- */
-  .book-shop { margin-top: 10px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-  .book-shop .best-row { display: flex; gap: 10px; padding: 10px 12px; background: var(--good-bg); }
-  .book-shop .best-row .cell { flex: 1; }
-  .book-shop .best-row .k { font-family: 'Red Hat Mono'; font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--good); }
-  .book-shop .best-row .v { font-weight: 700; font-size: 13.5px; color: var(--text); margin-top: 2px; }
-  .book-shop .best-row .v .num { font-size: 12px; color: var(--text-dim); font-weight: 400; }
-  .book-shop details summary { list-style: none; cursor: pointer; padding: 8px 12px; font-family: 'Red Hat Mono'; font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; }
-  .book-shop details summary::-webkit-details-marker { display: none; }
-  .book-shop details summary::after { content: "Compare all 6 books ▾"; }
-  .book-shop details[open] summary::after { content: "Hide comparison ▴"; }
-  .book-shop-table { width: 100%; border-collapse: collapse; }
-  .book-shop-table td { padding: 7px 12px; font-size: 12.5px; border-top: 1px solid var(--line); }
-  .book-shop-table td.book { color: var(--text-dim); }
-  .book-shop-table tr:first-child td { font-weight: 700; color: var(--good); }
-  .book-shop-table td.price, .book-shop-table td.ev { font-family: 'Red Hat Mono'; text-align: right; }
+  /* Conviction-scaled stake size (1-5 units), shown on every committed pick
+     — see nfl-betting/README.md#units. Dots fill left-to-right so 5u reads
+     as a stronger call than 1u at a glance, not just a bigger number. */
+  .unit-badge { display: inline-flex; align-items: center; gap: 5px; font-family: 'Red Hat Mono'; font-size: 10.5px; color: var(--text-dim); flex: 0 0 auto; }
+  .unit-badge .dots { display: inline-flex; gap: 2px; }
+  .unit-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+  .unit-badge .dot.filled { background: var(--accent); }
+  .cfb-theme .unit-badge .dot.filled { background: var(--accent-cfb); }
 
   .pick-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
   .pick-line .market-name { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -388,8 +375,6 @@
   .cfb-theme .cadence-day.active { background: color-mix(in srgb, var(--accent-cfb) 14%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent-cfb) 45%, var(--line)); }
   .cfb-theme .spread-block { background: color-mix(in srgb, var(--accent-cfb) 10%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent-cfb) 30%, var(--line)); }
   .cfb-theme .spread-block .call { color: var(--accent-cfb); }
-  .cfb-theme .book-shop .best-row .k, .cfb-theme .book-shop .best-row { background: color-mix(in srgb, var(--accent-cfb) 12%, var(--good-bg)); }
-  .cfb-theme .book-shop-table tr:first-child td { color: var(--accent-cfb); }
 
   /* ---------- Empty states ---------- */
   .empty-state { text-align: center; padding: 46px 24px; border: 1px dashed var(--line); border-radius: var(--radius); background: var(--surface); }
@@ -429,7 +414,8 @@
     .tab-btn { transition: none; }
     .tab-btn:hover { transform: none; }
   }
-  .record-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .record-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (max-width: 480px) { .record-strip { grid-template-columns: repeat(2, 1fr); } }
   .record-tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 10px; text-align: center; }
   .record-tile .lbl { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
   .record-tile .score { font-family: 'Erica One'; font-weight: 400; font-size: 26px; margin-top: 4px; }
@@ -563,10 +549,11 @@
       <div class="record-tile"><div class="lbl">Overall</div><div class="score num">0–0</div><div class="pct">no graded picks yet</div></div>
       <div class="record-tile"><div class="lbl">Games</div><div class="score num">0–0</div><div class="pct">—</div></div>
       <div class="record-tile"><div class="lbl">Props</div><div class="score num">0–0</div><div class="pct">—</div></div>
+      <div class="record-tile"><div class="lbl">Season Units</div><div class="score num">0.0u</div><div class="pct">no graded picks yet</div></div>
     </div>
     <div class="streak-row">
       <span class="streak-badge">— streak</span>
-      <p>First board just went up — nothing's been graded yet. Every committed pick from here gets logged and tracked; hedged "market snapshot" notes (like the reads below) don't count toward the record. Full ledger in <span class="num">nfl-betting/data/picks-ledger.json</span>.</p>
+      <p>First board just went up — nothing's been graded yet. Every committed pick from here gets logged and tracked, unit size and all; hedged "market snapshot" notes (like the reads below) don't count toward the record. Full ledger in <span class="num">nfl-betting/data/picks-ledger.json</span>.</p>
     </div>
   </div>
 
@@ -610,16 +597,16 @@
     <div class="section-head">
       <div>
         <p class="eyebrow">Super Bowl LXI</p>
-        <h2>Who's Favored</h2>
-        <p>Top of the board across DraftKings &amp; FanDuel as camps open. The other 27 teams are splitting the remaining ~51% of the market.</p>
+        <h2>Our Pick</h2>
+        <p>One call, not a market ranking: Denver's the team we'd actually bet, priced like a fringe contender it isn't.</p>
       </div>
     </div>
     <div class="rail">
-      <div class="sb-card"><span class="rank">#1</span><div class="team" data-team="LAR">Rams</div><div class="odds">+550</div><div class="implied">15.4% implied</div><div class="tag">Aggressive offseason, loaded roster</div></div>
-      <div class="sb-card"><span class="rank">#2</span><div class="team" data-team="SEA">Seahawks</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Defending champs</div></div>
-      <div class="sb-card"><span class="rank">#2</span><div class="team" data-team="BUF">Bills</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">AFC East co-favorite</div></div>
-      <div class="sb-card"><span class="rank">#2</span><div class="team" data-team="BAL">Ravens</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">AFC North favorite</div></div>
-      <div class="sb-card"><span class="rank">#5</span><div class="team" data-team="KC">Chiefs</div><div class="odds">+1500</div><div class="implied">6.3% implied</div><div class="tag">Bounce-back after 6-11</div></div>
+      <div class="sb-card our-pick"><span class="pick-badge">Our Pick</span><div class="team" data-team="DEN">Broncos</div><div class="odds">check board</div><div class="tag">Top-tier defense + Bo Nix, priced like a fringe contender. See Our Picks below for the full case.</div></div>
+      <div class="sb-card"><div class="team" data-team="LAR">Rams</div><div class="odds">+550</div><div class="implied">15.4% implied</div><div class="tag">Market favorite — loaded roster, no edge either way from us here</div></div>
+      <div class="sb-card"><div class="team" data-team="SEA">Seahawks</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Defending champs</div></div>
+      <div class="sb-card"><div class="team" data-team="BUF">Bills</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">AFC East co-favorite</div></div>
+      <div class="sb-card"><div class="team" data-team="BAL">Ravens</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">AFC North favorite</div></div>
     </div>
   </section>
 
@@ -627,16 +614,16 @@
     <div class="section-head">
       <div>
         <p class="eyebrow">MVP</p>
-        <h2>Who's Favored</h2>
-        <p>Same five as the Super Bowl board, mostly — MVP tracks team success more than raw stats.</p>
+        <h2>Our Pick</h2>
+        <p>MVP tracks team success more than raw stats — we're not seeing a case to fade the market's read here.</p>
       </div>
     </div>
     <div class="rail">
-      <div class="sb-card"><span class="rank">#1</span><div class="team" data-team="BUF">Josh Allen</div><div class="odds">+600</div><div class="implied">14.3% implied</div><div class="tag">BetMGM favorite, +550 elsewhere</div></div>
-      <div class="sb-card"><span class="rank">#2</span><div class="team" data-team="BAL">Lamar Jackson</div><div class="odds">+700</div><div class="implied">12.5% implied</div><div class="tag">Second choice league-wide</div></div>
-      <div class="sb-card"><span class="rank">#3</span><div class="team" data-team="CIN">Joe Burrow</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Tied for 3rd</div></div>
-      <div class="sb-card"><span class="rank">#3</span><div class="team" data-team="KC">Patrick Mahomes</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Tied for 3rd</div></div>
-      <div class="sb-card"><span class="rank">#3</span><div class="team" data-team="LAC">Justin Herbert</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Tied for 3rd</div></div>
+      <div class="sb-card our-pick"><span class="pick-badge">Our Pick</span><div class="team" data-team="BUF">Josh Allen</div><div class="odds">+600</div><div class="tag">Best QB on the team we'd bet to be the AFC's most complete roster</div></div>
+      <div class="sb-card"><div class="team" data-team="BAL">Lamar Jackson</div><div class="odds">+700</div><div class="implied">12.5% implied</div><div class="tag">Second choice league-wide</div></div>
+      <div class="sb-card"><div class="team" data-team="CIN">Joe Burrow</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Tied for 3rd</div></div>
+      <div class="sb-card"><div class="team" data-team="KC">Patrick Mahomes</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Tied for 3rd</div></div>
+      <div class="sb-card"><div class="team" data-team="LAC">Justin Herbert</div><div class="odds">+1000</div><div class="implied">9.1% implied</div><div class="tag">Tied for 3rd</div></div>
     </div>
   </section>
 
@@ -644,28 +631,25 @@
     <div class="section-head">
       <div>
         <p class="eyebrow">Awards &amp; Player Futures</p>
-        <h2>Rookies &amp; Stat Leaders</h2>
-        <p>Offensive/Defensive Rookie of the Year and the statistical-leader board — the season-long player props alongside the team futures.</p>
+        <h2>Our Picks</h2>
+        <p>Offensive/Defensive Rookie of the Year and the statistical-leader board — one call per category, not a ranked odds list.</p>
       </div>
     </div>
     <div class="div-grid">
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">Offensive Rookie of the Year</div>
-        <div class="row"><span class="who">Jeremiyah Love <span class="pill fav">Favorite</span></span><span class="price num">+300</span></div>
-        <div class="row"><span class="who">Fernando Mendoza <span class="pill value">2nd</span></span><span class="price num">+400</span></div>
-        <p class="angle">No. 1 and No. 3 overall picks atop the board. Carnell Tate and Jordyn Tyson tied as co-3rd choices at +650.</p>
+        <div class="row"><span class="who">Jeremiyah Love <span class="pill pick">Our Pick</span></span><span class="price num">+300</span></div>
+        <p class="angle">No. 1 overall pick, the shortest price on the board and nothing in the profile argues against it. Fernando Mendoza (+400) is the honest No. 2 if you want a hedge.</p>
       </div>
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">Defensive Rookie of the Year</div>
-        <div class="row"><span class="who">David Bailey <span class="pill fav">Favorite</span></span><span class="price num">+500</span></div>
-        <div class="row"><span class="who">Rueben Bain Jr. <span class="pill value">2nd</span></span><span class="price num">+550</span></div>
-        <p class="angle">No. 2 overall pick Bailey opened +450 and has already drifted to +500 — an edge rusher-heavy board up top.</p>
+        <div class="row"><span class="who">David Bailey <span class="pill pick">Our Pick</span></span><span class="price num">+500</span></div>
+        <p class="angle">No. 2 overall pick, opened +450 and has already drifted to +500 — still the top choice on an edge-rusher-heavy board, Rueben Bain Jr. (+550) close behind.</p>
       </div>
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">Passing Yards Leader</div>
-        <div class="row"><span class="who" data-team="DET">Jared Goff <span class="pill fav">Favorite</span></span><span class="price num">+750</span></div>
-        <div class="row"><span class="who" data-team="CIN">Joe Burrow <span class="pill fav">Tied</span></span><span class="price num">+750</span></div>
-        <p class="angle">Goff, Dak Prescott, and Burrow share the top spot at +750; reigning leader Matthew Stafford sits close behind at +900. Rushing- and receiving-yards leader boards aren't posted with clear favorites yet — not listing until they are.</p>
+        <div class="row"><span class="who" data-team="DET">Jared Goff <span class="pill pick">Our Pick</span></span><span class="price num">+750</span></div>
+        <p class="angle">True three-way coinflip with Dak Prescott and Joe Burrow at the same price — we lean Goff on Detroit's pass-heavy game script. Rushing/receiving-yards leader boards aren't posted with clear favorites yet, so no pick there until they are.</p>
       </div>
     </div>
   </section>
@@ -673,9 +657,9 @@
   <section>
     <div class="section-head">
       <div>
-        <p class="eyebrow">Value Board</p>
-        <h2>Bets Worth A Look</h2>
-        <p>Longshots the market is pricing behind what the underlying roster/scheme story supports.</p>
+        <p class="eyebrow">Longshots &amp; Value</p>
+        <h2>Our Picks</h2>
+        <p>Where we're willing to disagree with the market — priced behind what the underlying roster/scheme story supports.</p>
       </div>
     </div>
     <div class="value-list">
@@ -747,66 +731,58 @@
     <div class="section-head">
       <div>
         <p class="eyebrow">Eight Races</p>
-        <h2>Division Winners</h2>
-        <p>Market favorite vs. the value angle in every division. Only two teams in the league are odds-on to win their own division.</p>
+        <h2>Our Picks</h2>
+        <p>One call per division — where we agree with the market favorite, and the three spots where we don't.</p>
       </div>
     </div>
     <div class="div-grid">
 
       <div class="div-card">
         <div class="div-name">AFC East</div>
-        <div class="row"><span class="who" data-team="BUF">Bills <span class="pill fav">Favorite</span></span><span class="price num">-130</span></div>
-        <div class="row"><span class="who" data-team="NE">Patriots <span class="pill value">Value</span></span><span class="price num">+125</span></div>
-        <p class="angle">Only odds-on favorite in the AFC. Patriots are live at plus money one year after their surprise run.</p>
+        <div class="row"><span class="who" data-team="BUF">Bills <span class="pill pick">Our Pick</span></span><span class="price num">-130</span></div>
+        <p class="angle">Only odds-on favorite in the AFC and nothing argues against them — Patriots (+125) are the live long-money alternative if you want a hedge.</p>
       </div>
 
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">AFC North</div>
-        <div class="row"><span class="who" data-team="BAL">Ravens <span class="pill fav">Favorite</span></span><span class="price num">short</span></div>
-        <div class="row"><span class="who" data-team="CIN">Bengals <span class="pill value">Value</span></span><span class="price num">+210</span></div>
-        <p class="angle">One of only two teams odds-on in its own division. Sharp Football's board leans Bengals over the field at plus money — Steelers (+500) also in play.</p>
+        <div class="row"><span class="who" data-team="CIN">Bengals <span class="pill pick">Our Pick</span></span><span class="price num">+210</span></div>
+        <p class="angle">We're against the Ravens' short favorite price here — Sharp Football's board leans Bengals over the field at plus money, and we agree. Steelers (+500) also live.</p>
       </div>
 
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">AFC South</div>
-        <div class="row"><span class="who" data-team="HOU">Texans <span class="pill fav">Favorite</span></span><span class="price num">—</span></div>
-        <div class="row"><span class="who" data-team="JAX">Jaguars <span class="pill value">Value</span></span><span class="price num">+210</span></div>
-        <p class="angle">Texans favored despite Jacksonville winning the division at 13-4 last year — the market thinks last year was the outlier. Titans (+800) are the deep sleeper.</p>
+        <div class="row"><span class="who" data-team="JAX">Jaguars <span class="pill pick">Our Pick</span></span><span class="price num">+210</span></div>
+        <p class="angle">Texans are favored despite Jacksonville winning this division at 13-4 last year — we think the market's overcorrecting off one down year for Houston. Titans (+800) are the deep sleeper.</p>
       </div>
 
       <div class="div-card">
         <div class="div-name">AFC West</div>
-        <div class="row"><span class="who" data-team="KC">Chiefs <span class="pill fav">Favorite</span></span><span class="price num">+180</span></div>
-        <div class="row"><span class="who">field <span class="pill value">Watch</span></span><span class="price num">—</span></div>
-        <p class="angle">Still favored at 35.7% implied despite a 6-11 finish — that's the Mahomes/Reid tax. Fair price for a bounce-back, not a value bet.</p>
+        <div class="row"><span class="who" data-team="KC">Chiefs <span class="pill pick">Our Pick</span></span><span class="price num">+180</span></div>
+        <p class="angle">Still favored at 35.7% implied despite a 6-11 finish — that's the Mahomes/Reid tax, and it's a fair price for a bounce-back. No value case elsewhere in this division.</p>
       </div>
 
       <div class="div-card">
         <div class="div-name">NFC East</div>
-        <div class="row"><span class="who" data-team="PHI">Eagles <span class="pill fav">Favorite</span></span><span class="price num">+115</span></div>
-        <div class="row"><span class="who" data-team="DAL">Cowboys <span class="pill value">Value</span></span><span class="price num">+235</span></div>
-        <p class="angle">The only repeat division favorite in the league. Cowboys and Commanders (+460) both live if Philly slips at all.</p>
+        <div class="row"><span class="who" data-team="PHI">Eagles <span class="pill pick">Our Pick</span></span><span class="price num">+115</span></div>
+        <p class="angle">The only repeat division favorite in the league, and nothing in the Cowboys (+235) or Commanders (+460) case is strong enough to fade them.</p>
       </div>
 
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">NFC North</div>
-        <div class="row"><span class="who">no consensus <span class="pill fav">Split</span></span><span class="price num">—</span></div>
-        <div class="row"><span class="who" data-team="GB">Packers <span class="pill value">Value</span></span><span class="price num">+195</span></div>
-        <p class="angle">Genuinely split board: handicappers like Bears (+325), Sharp Football likes Packers (+195) and Vikings (+510). Disagreement this loud is worth watching.</p>
+        <div class="row"><span class="who" data-team="GB">Packers <span class="pill pick">Our Pick</span></span><span class="price num">+195</span></div>
+        <p class="angle">Genuinely split board — Bears (+325) get the public buzz, but Sharp Football likes Packers here and so do we. Vikings (+510) round out a real four-team race.</p>
       </div>
 
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">NFC South</div>
-        <div class="row"><span class="who" data-team="TB">Buccaneers <span class="pill fav">Favorite</span></span><span class="price num">+185</span></div>
-        <div class="row"><span class="who" data-team="NO">Saints <span class="pill value">Value</span></span><span class="price num">+280</span></div>
-        <p class="angle">Tampa favored at 35% implied, but nobody's run away with this division in years. Saints' schedule is the case above.</p>
+        <div class="row"><span class="who" data-team="NO">Saints <span class="pill pick">Our Pick</span></span><span class="price num">+280</span></div>
+        <p class="angle">Not a sexy pick, but the second-easiest schedule in the league in a division nobody's run away with is a real, checkable edge over Tampa's short favorite price.</p>
       </div>
 
       <div class="div-card">
         <div class="div-name">NFC West</div>
-        <div class="row"><span class="who" data-team="LAR">Rams <span class="pill fav">Favorite</span></span><span class="price num">+100/150</span></div>
-        <div class="row"><span class="who">field <span class="pill value">Fade?</span></span><span class="price num">—</span></div>
-        <p class="angle">Line has moved from +150 toward even money on Rams — same team leading the Super Bowl board. Buying in twice on one roster is the risk to weigh.</p>
+        <div class="row"><span class="who" data-team="LAR">Rams <span class="pill pick">Our Pick</span></span><span class="price num">+100/150</span></div>
+        <p class="angle">Still the best roster in the division even after the line moved toward even money. Only real risk: it's the same team leading our Super Bowl board too, so you're doubling up on one roster if you play both.</p>
       </div>
 
     </div>
@@ -826,7 +802,7 @@
       <div class="empty-state">
         <div class="icon">🎯</div>
         <h3>Props land here Aug 13+</h3>
-        <p>Once real menus are posted, each card shows the player, the line, our read, and the best book to bet it at — same line-shopping across DraftKings, Fanatics, FanDuel, BetMGM, BetRivers, and Bet365 as every other pick on the board. Preview of the card format below.</p>
+        <p>Once real menus are posted, each card shows the player, the line, and our pick — over or under, backed by the matchup reasoning behind it. Preview of the card format below.</p>
       </div>
       <div class="pick-card" style="margin-top:14px; opacity:0.72;">
         <div class="matchup-row">
@@ -837,12 +813,13 @@
           <span class="when">Format preview, not a real line</span>
         </div>
         <div class="spread-block">
-          <div><div class="lbl">Prop line</div><div class="call">Over 64.5</div></div>
-          <span class="price num">-115</span>
+          <div><div class="lbl">Our Pick</div><div class="call">Over 64.5</div></div>
+          <div class="price-col">
+            <span class="unit-badge"><span class="dots"><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span><span class="dot"></span></span>3u</span>
+            <span class="price num">-115</span>
+          </div>
         </div>
-        <div class="book-shop">
-          <div class="best-row"><div class="cell"><div class="k">Best Odds</div><div class="v">FanDuel <span class="num">-108</span></div></div><div class="cell"><div class="k">Best EV / $100</div><div class="v">$14.20</div></div></div>
-        </div>
+        <p class="reasoning">This is where the matchup-driven reasoning for the pick goes — why the number's soft, not a menu of book prices. The unit badge is our conviction, 1-5 — this one's a solid lean, not a max-confidence play.</p>
       </div>
     </section>
   </div>
@@ -863,24 +840,16 @@
         <span class="matchup"><span data-team="CAR">Panthers</span> @ <span data-team="ARI">Cardinals</span></span>
         <span class="when">Hall of Fame Game · Canton, OH · Thu Aug 6 · 8:00 PM ET · NBC</span>
       </div>
-      <div class="spread-block" role="button" tabindex="0" aria-expanded="false" data-compare="cardinals-spread">
-        <div><div class="lbl">Spread — no lean, market number only · <span class="tap-hint">tap to compare books</span></div><div class="call">Cardinals -1.5</div></div>
-        <div class="price-col"><span class="price num">-110</span><span class="chev">▾</span></div>
-      </div>
-      <div class="book-compare" id="cardinals-spread">
-        <div class="book-compare-inner">
-          <div class="bc-title">Cardinals -1.5 by book</div>
-          <div class="bc-row"><span class="bc-book">BetMGM</span><span class="bc-price num">-110 (35.5 total)</span></div>
-          <div class="bc-row"><span class="bc-book">Market consensus (most books)</span><span class="bc-price num">-110 (36.5 total)</span></div>
-          <div class="bc-note">Honest gap: BetMGM's own number is independently confirmed; DraftKings, FanDuel, Fanatics, BetRivers, and Bet365 individually aren't reliably pullable via web search for a lower-volume preseason game like this one — no bot-blocked odds-comparison sites would load. This panel populates with all 6 books automatically once a live odds feed (<span class="num">ODDS_API_KEY</span>, see <span class="num">nfl-betting/src/providers/oddsProvider.js</span>) is connected — same real mechanism already built and tested, just not wired to a live key in this environment.</div>
-        </div>
+      <div class="spread-block">
+        <div><div class="lbl">Our Pick — spread</div><div class="call">No play, taking the number as-is</div></div>
+        <div class="price-col"><span class="price num">Cardinals -1.5</span></div>
       </div>
       <div class="pick-line">
         <span class="market-name">Total</span>
         <span class="call good">Lean Under</span>
         <span class="price num">36.5</span>
       </div>
-      <p class="reasoning">Spreads are the primary weekly signal here, and this one's a pass: the model panel at OddsShopper leans Arizona (-125 ML, 55.6% implied), but the Kalshi prediction market has it a near coin flip (51¢ Carolina) — that split is a QB2-battle question, not a real edge, so no side gets thrown out just because a line exists. The one lean we will make: preseason unders have historically outhit overs league-wide, since backup-heavy offenses are sloppier than a 36.5 total assumes. Exhibition opener, minimal signal — treat as a market snapshot. Tap the spread above to see the book-by-book breakdown we do have.</p>
+      <p class="reasoning">Spreads are the primary weekly signal here, and this one's an honest pass, not a hedge: the model panel at OddsShopper leans Arizona (-125 ML, 55.6% implied), but the Kalshi prediction market has it a near coin flip (51¢ Carolina) — that split is a QB2-battle question, not a real edge, so we're not throwing out a side just because a number exists. The one call we will make: Lean Under on the total, since preseason unders have historically outhit overs league-wide — backup-heavy offenses are sloppier than a 36.5 total assumes. Exhibition opener, minimal signal — treat this as a market snapshot, not a strong-conviction pick.</p>
       <div class="props-note"><b>Props watch, not picks yet:</b> real backup-QB reps for CAR (post-Bryce-Young competition) and ARI's WR3/4 battle are the actual storylines here — prop books rarely post full player menus for the HOF Game. Full weekly player props start landing here from Preseason Week 1 (Aug 13–15) onward.</div>
     </div>
   </section>
@@ -913,115 +882,73 @@
     <div class="section-head">
       <div>
         <p class="eyebrow">CFP National Championship</p>
-        <h2>Who's Favored</h2>
-        <p>Seven different schools sit at +1100 or shorter — the most wide-open title race the market has priced in years.</p>
+        <h2>Our Pick</h2>
+        <p>Seven schools sit at +1100 or shorter — the most wide-open title race the market's priced in years, and we've got a lean.</p>
       </div>
     </div>
     <div class="rail">
-      <div class="sb-card"><span class="rank">#1</span><div class="team" data-team="OSU">Ohio State</div><div class="odds">+550</div><div class="implied">15.4% implied</div><div class="tag">Big Ten co-favorite too</div></div>
-      <div class="sb-card"><span class="rank">#2</span><div class="team" data-team="ND">Notre Dame</div><div class="odds">+650</div><div class="implied">13.3% implied</div><div class="tag">Independent, always in the mix</div></div>
-      <div class="sb-card"><span class="rank">#3</span><div class="team" data-team="IND">Indiana</div><div class="odds">check board</div><div class="implied">defending champ</div><div class="tag">Debuted 5th choice, now co-3rd</div></div>
-      <div class="sb-card"><span class="rank">—</span><div class="team" data-team="TEX">Texas</div><div class="odds">check board</div><div class="implied">SEC runner-up</div><div class="tag">Portal haul: Coleman, more</div></div>
-      <div class="sb-card"><span class="rank">—</span><div class="team" data-team="UGA">Georgia</div><div class="odds">check board</div><div class="implied">SEC favorite</div><div class="tag">In the top tier per CBS</div></div>
+      <div class="sb-card our-pick"><span class="pick-badge">Our Pick</span><div class="team" data-team="LSU">LSU</div><div class="odds">check board</div><div class="tag">Lane Kiffin hire + two portal headliners (Leavitt, Seaton) in one cycle — priced behind the actual firepower added</div></div>
+      <div class="sb-card"><div class="team" data-team="OSU">Ohio State</div><div class="odds">+550</div><div class="implied">15.4% implied</div><div class="tag">Market favorite — Big Ten co-favorite too</div></div>
+      <div class="sb-card"><div class="team" data-team="ND">Notre Dame</div><div class="odds">+650</div><div class="implied">13.3% implied</div><div class="tag">Independent, always in the mix</div></div>
+      <div class="sb-card"><div class="team" data-team="IND">Indiana</div><div class="odds">check board</div><div class="tag">Defending champ, debuted 5th choice, now co-3rd</div></div>
+      <div class="sb-card"><div class="team" data-team="TEX">Texas</div><div class="odds">check board</div><div class="tag">SEC runner-up, portal haul: Coleman, more</div></div>
     </div>
-  </section>
-
-  <section>
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">Value Board</p>
-        <h2>Bets Worth A Look</h2>
-        <p>Named directly as value plays against the title price by CBS Sports' futures read.</p>
-      </div>
-    </div>
-    <div class="value-list">
-      <div class="value-card">
-        <div class="stripe"></div>
-        <div class="body">
-          <div class="top">
-            <span><span class="team" data-team="LSU">LSU</span><span class="market">National Championship</span></span>
-            <span class="price-block"><span class="odds">check board</span></span>
-          </div>
-          <p class="why">Landed Lane Kiffin as head coach AND two portal headliners (QB Sam Leavitt, OT Jordan Seaton) in the same cycle — a lot of firepower added for a price the market hasn't fully caught up to yet.</p>
-          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size:11px;">Solid value</span></span>
-        </div>
-      </div>
-      <div class="value-card">
-        <div class="stripe"></div>
-        <div class="body">
-          <div class="top">
-            <span><span class="team" data-team="TTU">Texas Tech</span><span class="market">National Championship</span></span>
-            <span class="price-block"><span class="odds">check board</span></span>
-          </div>
-          <p class="why">Reigning Big 12 champs and a CFP team last year, now adding the portal's most sought-after QB (Brendan Sorsby). Heavy Big 12 favorite already — this is the market pricing them to repeat the conference run and then some.</p>
-          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size:11px;">Solid value</span></span>
-        </div>
-      </div>
-    </div>
+    <p style="font-size:13px; color:var(--text-dim); margin-top:2px;">Also like: <span data-team="TTU">Texas Tech</span> — reigning Big 12 champs adding the portal's most sought QB (Brendan Sorsby), already the heavy Big 12 favorite. Not our top pick since that firepower is already priced in, but a live second choice.</p>
   </section>
 
   <section>
     <div class="section-head">
       <div>
         <p class="eyebrow">All 9 FBS Conferences</p>
-        <h2>Championship Races</h2>
-        <p>Every conference, Power 4 and Group of 5 — no tier left off the board.</p>
+        <h2>Our Picks</h2>
+        <p>Every conference, Power 4 and Group of 5 — one call each, no tier left off the board.</p>
       </div>
     </div>
     <div class="div-grid">
       <div class="div-card">
         <div class="div-name">SEC</div>
-        <div class="row"><span class="who" data-team="UGA">Georgia <span class="pill fav">Favorite</span></span><span class="price num">+257</span></div>
-        <div class="row"><span class="who" data-team="TEX">Texas <span class="pill value">Value</span></span><span class="price num">+376</span></div>
-        <p class="angle">Lukewarm favorite (28% implied) in a race with no dominant team — the deepest conference top-to-bottom.</p>
+        <div class="row"><span class="who" data-team="UGA">Georgia <span class="pill pick">Our Pick</span></span><span class="price num">+257</span></div>
+        <p class="angle">Lukewarm favorite (28% implied) in the deepest conference top-to-bottom, but nothing makes a clean case to fade them — Texas (+376) is the honest hedge if you want the field.</p>
       </div>
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">Big Ten</div>
-        <div class="row"><span class="who" data-team="OSU">Ohio State <span class="pill fav">Favorite</span></span><span class="price num">+223</span></div>
-        <div class="row"><span class="who" data-team="IND">Indiana <span class="pill value">Value</span></span><span class="price num">+317</span></div>
-        <p class="angle">Ohio State, Oregon (+285), and Indiana bunched within a few points of implied probability — genuinely no clear favorite.</p>
+        <div class="row"><span class="who" data-team="IND">Indiana <span class="pill pick">Our Pick</span></span><span class="price num">+317</span></div>
+        <p class="angle">Genuinely no clear favorite — Ohio State, Oregon (+285), and Indiana are bunched within a few points of implied probability, and we like the defending champ getting this price in a real coinflip race.</p>
       </div>
       <div class="div-card">
         <div class="div-name">ACC</div>
-        <div class="row"><span class="who" data-team="MIAMI">Miami <span class="pill fav">Favorite</span></span><span class="price num">-138</span></div>
-        <div class="row"><span class="who" data-team="SMU">SMU <span class="pill value">Value</span></span><span class="price num">+700</span></div>
-        <p class="angle">Only true heavy favorite (58% implied) among the Power 4 — the rest of the league is fighting for the other 42%.</p>
+        <div class="row"><span class="who" data-team="MIAMI">Miami <span class="pill pick">Our Pick</span></span><span class="price num">-138</span></div>
+        <p class="angle">Only true heavy favorite (58% implied) among the Power 4 — the rest of the league is fighting for the other 42%, no edge in fading Miami here.</p>
       </div>
       <div class="div-card">
         <div class="div-name">Big 12</div>
-        <div class="row"><span class="who" data-team="TTU">Texas Tech <span class="pill fav">Favorite</span></span><span class="price num">short</span></div>
-        <div class="row"><span class="who">Utah / BYU <span class="pill value">Value</span></span><span class="price num">+700 / +750</span></div>
-        <p class="angle">Reigning champs favored again; Utah and BYU are the next tier down at plus-money, well ahead of the rest of the field.</p>
+        <div class="row"><span class="who" data-team="TTU">Texas Tech <span class="pill pick">Our Pick</span></span><span class="price num">short</span></div>
+        <p class="angle">Same call as our National Championship pick's runner-up — reigning champs, favored again, and Utah/BYU (+700/+750) are the tier below, not a reason to fade.</p>
       </div>
       <div class="div-card">
         <div class="div-name">AAC</div>
-        <div class="row"><span class="who" data-team="NAVY">Navy <span class="pill fav">Favorite</span></span><span class="price num">+360</span></div>
-        <div class="row"><span class="who" data-team="UTSA">UTSA <span class="pill value">Value</span></span><span class="price num">+475</span></div>
-        <p class="angle">Army and Tulane tied at +600 right behind — the two teams that actually met in last year's title game are now chasing Navy.</p>
+        <div class="row"><span class="who" data-team="NAVY">Navy <span class="pill pick">Our Pick</span></span><span class="price num">+360</span></div>
+        <p class="angle">Army and Tulane — last year's actual title-game participants — are tied at +600 right behind Navy. Worth watching, but not enough of a case yet to move off the favorite.</p>
       </div>
-      <div class="div-card">
+      <div class="div-card our-pick">
         <div class="div-name">Mountain West</div>
-        <div class="row"><span class="who" data-team="UNM">New Mexico <span class="pill fav">Favorite</span></span><span class="price num">+220</span></div>
-        <div class="row"><span class="who" data-team="UNLV">UNLV <span class="pill value">Value</span></span><span class="price num">+240</span></div>
-        <p class="angle">Slimmest favorite's edge of any conference — UNLV's reached three straight title games with Boise State gone from the league.</p>
+        <div class="row"><span class="who" data-team="UNLV">UNLV <span class="pill pick">Our Pick</span></span><span class="price num">+240</span></div>
+        <p class="angle">Slimmest favorite's edge of any conference (New Mexico, +220), and UNLV's reached three straight title games with Boise State gone from the league — real, recent proof of contention at a marginally worse price.</p>
       </div>
       <div class="div-card">
         <div class="div-name">Conference USA</div>
-        <div class="row"><span class="who" data-team="LIB">Liberty <span class="pill fav">Favorite</span></span><span class="price num">+260</span></div>
-        <div class="row"><span class="who" data-team="WKU">W. Kentucky <span class="pill value">Value</span></span><span class="price num">+280</span></div>
-        <p class="angle">Reigning champ Jacksonville State sits 3rd choice at +450 — a genuine three-team race up top.</p>
+        <div class="row"><span class="who" data-team="LIB">Liberty <span class="pill pick">Our Pick</span></span><span class="price num">+260</span></div>
+        <p class="angle">Reigning champ Jacksonville State sits 3rd choice at +450 in a genuine three-team race, but nothing specifically argues for fading the favorite here.</p>
       </div>
       <div class="div-card">
         <div class="div-name">MAC</div>
-        <div class="row"><span class="who" data-team="WMU">W. Michigan <span class="pill fav">Favorite</span></span><span class="price num">+320</span></div>
-        <div class="row"><span class="who">field <span class="pill value">Watch</span></span><span class="price num">—</span></div>
-        <p class="angle">Miami (OH), Toledo, and Ohio round out the chase pack — the MAC's favorite is priced softer (23.8% implied) than most conference favorites.</p>
+        <div class="row"><span class="who" data-team="WMU">W. Michigan <span class="pill pick">Our Pick</span></span><span class="price num">+320</span></div>
+        <p class="angle">Priced softer (23.8% implied) than most conference favorites, in a race with Miami (OH), Toledo, and Ohio chasing — a fair, not a fadeable, favorite price.</p>
       </div>
       <div class="div-card">
         <div class="div-name">Sun Belt</div>
-        <div class="row"><span class="who" data-team="JMU">James Madison <span class="pill fav">Favorite</span></span><span class="price num">+230</span></div>
-        <div class="row"><span class="who" data-team="ODU">Old Dominion <span class="pill value">Value</span></span><span class="price num">+450</span></div>
-        <p class="angle">JMU stays favored even after losing coach Bob Chesney to UCLA. Troy (+800) and Louisiana (+850) lead the rest of the field.</p>
+        <div class="row"><span class="who" data-team="JMU">James Madison <span class="pill pick">Our Pick</span></span><span class="price num">+230</span></div>
+        <p class="angle">Stays favored even after losing coach Bob Chesney to UCLA — that coaching change is the one real risk to this pick, worth watching. Troy (+800) and Louisiana (+850) are the field.</p>
       </div>
     </div>
   </section>
@@ -1044,16 +971,9 @@
         <span class="matchup"><span data-team="SJSU">San Jose State</span> @ <span data-team="USC">USC</span></span>
         <span class="when">Week 0 · LA Memorial Coliseum · Sat Aug 29 · NBC/Peacock</span>
       </div>
-      <div class="spread-block" role="button" tabindex="0" aria-expanded="false" data-compare="usc-spread">
-        <div><div class="lbl">Spread — no lean, market number only · <span class="tap-hint">tap to compare books</span></div><div class="call">USC -35.5</div></div>
-        <div class="price-col"><span class="price num">-110</span><span class="chev">▾</span></div>
-      </div>
-      <div class="book-compare" id="usc-spread">
-        <div class="book-compare-inner">
-          <div class="bc-title">USC -35.5 by book</div>
-          <div class="bc-row"><span class="bc-book">Market consensus (most books)</span><span class="bc-price num">-110</span></div>
-          <div class="bc-note">No individual per-book breakdown sourced for this one — a 35.5-point Week 0 blowout against a heavy underdog doesn't get much distinct book-to-book coverage worth searching for. Same mechanism as every other pick here: connect a live odds feed and this fills in with real DraftKings/FanDuel/Fanatics/BetMGM/BetRivers/Bet365 prices automatically.</div>
-        </div>
+      <div class="spread-block">
+        <div><div class="lbl">Our Pick — spread</div><div class="call">No play, taking the number as-is</div></div>
+        <div class="price-col"><span class="price num">USC -35.5</span></div>
       </div>
       <div class="pick-line">
         <span class="market-name">Total</span>
@@ -1073,21 +993,7 @@
       <p>Once real snaps are on tape, the in-house engine takes over for the NFL: an Elo/SRS power-rating system seeded from last season, updated after every game, feeding offense-vs-defense, weather, and scheme-mismatch matchup projections for game lines, plus a matchup-driven read on player props and a Monte Carlo season simulator for futures — cross-checked against real no-vig market pricing. It's also already pulling one real live signal today, not gated behind games being played: NFL Next Gen Stats (receiver separation/YAC, QB time-to-throw/CPOE, RB rush yards over expected, 2016–2025) via the community <a href="https://github.com/nflverse/nflverse-data" target="_blank" rel="noopener">nflverse</a> project, blended across recent seasons into a position-group edge for each matchup — see <span class="num">positionMatchup.js</span>. Honest limit: there's no free public defensive-tracking data, so this reads offensive skill-position strength, not a true two-way coverage matchup. Code lives in <span class="num">nfl-betting/</span> on this repo. The College Football side reuses the same odds math and value-detection logic, but not the Monte Carlo bracket sim yet — FBS's 130+ teams and 12-team CFP format (5 conference-champ auto bids + 7 at-large) is a different modeling problem than the NFL's fixed bracket, so CFB value calls come from power-rating-vs-market comparisons for now, not a full simulation. We don't cap how many picks get surfaced on either board — every signal that clears the bar makes the cut.</p>
       <p><b style="color:var(--text);">Scouting sites we check:</b> before every pick we look at CFB Graphs, CFBDepth, PEARatings, RotoWire's defense-vs-position tool, Tracking Football, CFBstats, and DraftEdge for matchup color. In practice, all seven block automated access outright (403, bot protection — not an API-key paywall), so we can't pull their tables directly; what we can do is search for anything they've published publicly and cite it by name when a real result comes back. Every pick's reasoning is grounded either in the model's own computed numbers (always real) or in a specifically-cited article — never a stat invented to sound plausible.</p>
       <p><b style="color:var(--text);">Pick philosophy:</b> against-the-spread is the primary weekly lens — that boxed number on each game card is the headline call. Moneylines aren't posted by default; one gets thrown out (flagged with a green <span class="num">ML LEAN</span> badge) only when the model has real separation from the market, not just because a price exists. Totals stay supporting context unless there's a genuine edge there too.</p>
-      <p><b style="color:var(--text);">Line shopping:</b> every committed pick is priced across six books — DraftKings, Fanatics, FanDuel, BetMGM, BetRivers, and Bet365 — and shows the best price and the EV at that price. They're always the same book: for one model probability, the best-priced book <em>is</em> the best-EV book, that's just the math, not a mismatch. Here's the format live (real engine output, synthetic demo data — not a real pick, mock mode isn't wired to real books yet):</p>
-      <div class="book-shop" style="margin: 8px 0 16px;">
-        <div class="best-row"><div class="cell"><div class="k">Best Odds</div><div class="v">BetRivers <span class="num">-108</span></div></div><div class="cell"><div class="k">Best EV / $100</div><div class="v">$79.07</div></div></div>
-        <details>
-          <summary></summary>
-          <table class="book-shop-table">
-            <tr><td class="book">BetRivers</td><td class="price num">-108</td><td class="ev num">+$79.07</td></tr>
-            <tr><td class="book">FanDuel</td><td class="price num">-109</td><td class="ev num">+$78.28</td></tr>
-            <tr><td class="book">BetMGM</td><td class="price num">-111</td><td class="ev num">+$76.74</td></tr>
-            <tr><td class="book">DraftKings</td><td class="price num">-112</td><td class="ev num">+$75.99</td></tr>
-            <tr><td class="book">Fanatics</td><td class="price num">-114</td><td class="ev num">+$74.54</td></tr>
-            <tr><td class="book">Bet365</td><td class="price num">-114</td><td class="ev num">+$74.54</td></tr>
-          </table>
-        </details>
-      </div>
+      <p><b style="color:var(--text);">What you won't see here:</b> a ranked list of who has the best price across DraftKings, Fanatics, FanDuel, BetMGM, BetRivers, and Bet365. That's odds-shopping, not a pick, and this board doesn't do it anymore (removed Aug 2026). Every market gets exactly one call — the team or side we'd actually bet — labeled <span class="num">Our Pick</span>, with the real reasoning behind it. Where two options are genuinely a coinflip, we say so and still name a lean rather than listing both as equally live.</p>
       <div class="cadence-strip">
         <div class="cadence-day active"><div class="d">Tue</div><div class="t">Full board</div></div>
         <div class="cadence-day"><div class="d">Wed</div><div class="t">—</div></div>
@@ -1212,19 +1118,6 @@
     countEls.forEach(function (el) { io2.observe(el); });
   }
 
-  // ---- Click-to-compare: tap a pick's odds to see the per-book breakdown ----
-  document.querySelectorAll('[data-compare]').forEach(function (trigger) {
-    var panel = document.getElementById(trigger.dataset.compare);
-    if (!panel) return;
-    function toggle() {
-      var open = panel.classList.toggle('open');
-      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
-    }
-    trigger.addEventListener('click', toggle);
-    trigger.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
-    });
-  });
 
   // ---- Page-tab transitions: panel snap-in + football flyby ----
   var football = document.getElementById('football-fly');

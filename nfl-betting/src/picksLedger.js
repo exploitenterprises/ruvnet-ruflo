@@ -12,7 +12,7 @@ export async function loadLedger() {
 
 export async function saveLedger(picks) {
   const payload = {
-    _schema: "Each entry: id, sport ('nfl'|'cfb', defaults to 'nfl' if omitted), dateIssued (ISO), category ('game'|'prop'), label (matchup or player), market, selection, price (american odds), player (prop picks only), gameDate, status ('pending'|'win'|'loss'|'push'), settledDate, note. Only picks the board actually commits to (not hedged 'market snapshot' notes) get logged here — see nfl-betting/README.md#track-record. Filter by sport before calling trackRecord.js helpers to get sport-scoped stats.",
+    _schema: "Each entry: id, sport ('nfl'|'cfb', defaults to 'nfl' if omitted), dateIssued (ISO), category ('game'|'prop'), label (matchup or player), market, selection, price (american odds), units (1-5, conviction-scaled stake size — see nfl-betting/README.md#units), player (prop picks only), gameDate, status ('pending'|'win'|'loss'|'push'), settledDate, note. Only picks the board actually commits to (not hedged 'market snapshot' notes) get logged here — see nfl-betting/README.md#track-record. Filter by sport before calling trackRecord.js helpers to get sport-scoped stats.",
     picks,
   };
   await writeFile(LEDGER_PATH, JSON.stringify(payload, null, 2));
@@ -20,9 +20,12 @@ export async function saveLedger(picks) {
 
 // Append a new pick with status 'pending'. Caller supplies a stable id
 // (e.g. `${week}-${team}-${market}`) so re-runs don't duplicate entries.
+// `entry.units` should be a 1-5 conviction-scaled stake size (see
+// trackRecord.js's netUnits) — defaults to 1 (a lean) if the caller omits it,
+// never silently 0, so every committed pick counts toward the season total.
 export function addPick(picks, entry) {
   if (picks.some((p) => p.id === entry.id)) return picks;
-  return [...picks, { status: 'pending', ...entry }];
+  return [...picks, { status: 'pending', units: 1, ...entry }];
 }
 
 // Mark a pending pick settled. Throws if the id isn't found, so a typo in a

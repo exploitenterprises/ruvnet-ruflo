@@ -140,18 +140,33 @@ Against-the-spread is the primary weekly signal for both leagues — every
 committed game pick defaults to a spread call. Moneylines aren't posted
 just because a price exists; one gets added only when the model has real
 separation from the market. Totals stay supporting context unless there's
-a genuine edge there too.
+a genuine edge there too. Every market gets exactly one call — "Our Pick" —
+never a ranked list of who has the best price across sportsbooks; where the
+model has no real edge over the market, the honest pick is "no play,"
+stated plainly rather than hedged.
+
+## Units
+
+Every committed pick carries a `units` field (1-5) sizing it by conviction —
+1 is a lean, 5 is the strongest call on the board. This isn't Kelly staking
+(see `kellyStake` in `probability.js` for that, used for bankroll-percentage
+sizing) — it's the simpler, standard handicapping convention of a flat
+unit scale, chosen because it's what the app displays to users deciding
+how much weight to put on a pick, not an internal bankroll calculation.
+`picksLedger.addPick` defaults `units` to `1` if the caller omits it, so
+an old or hand-edited entry still counts toward the season total instead
+of silently vanishing from it.
 
 ## Track record
 
 `data/picks-ledger.json` is the append-only log of every pick the board has
 actually **committed to** — a clear side/selection with a price, not a
-hedged "market snapshot" read. Each entry also carries `sport` ('nfl'|'cfb')
-and `market` ('spread'|'moneyline'|'total') so the record can be scoped
-either way. `src/picksLedger.js` has `addPick` (log a new pending pick,
-id-idempotent) and `settlePick` (grade it win/loss/push once
-the game's final). `src/analysis/trackRecord.js` turns that ledger into what
-the board displays:
+hedged "market snapshot" read. Each entry also carries `sport` ('nfl'|'cfb'),
+`market` ('spread'|'moneyline'|'total'), and `units` (see above) so the
+record can be scoped either way. `src/picksLedger.js` has `addPick` (log a
+new pending pick, id-idempotent) and `settlePick` (grade it win/loss/push
+once the game's final). `src/analysis/trackRecord.js` turns that ledger
+into what the board displays:
 
 - `gradeSummary(picks, category?)` — win/loss/push/pending counts and win%
   (pushes and pending picks are excluded from the win% denominator, standard
@@ -161,6 +176,10 @@ the board displays:
 - `playerStreaks(picks)` — which players are currently on a run of hit props
   ("hot" players), most recent settled prop picks per player. A trend
   signal, not a claim that the streak predicts anything.
+- `netUnits(picks, category?)` — the running season unit count: a win pays
+  `units * (decimal odds - 1)`, a loss costs the full `units` staked, a push
+  is a wash, and pending picks don't count until they settle. This is the
+  number behind the board's "Season Units" tile.
 
 The displayed record is only ever derived from the ledger — never
 hand-written — so it can't drift from what was actually picked and graded.

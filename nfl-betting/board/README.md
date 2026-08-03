@@ -35,34 +35,29 @@ is a generic jersey-silhouette icon. Both are driven by `data-team="XXX"` /
 `data-player="..."` attributes; the `TEAM_META` color map and badge injector
 live in the `<script>` block at the end of `template.html`.
 
-## Line shopping (best odds / best EV)
+## No book-odds-shopping (removed Aug 2026)
 
-Every committed pick shows the best price across six books (DraftKings,
-Fanatics, FanDuel, BetMGM, BetRivers, Bet365) via the `.book-shop` component,
-sourced from `nfl-betting/src/analysis/valueFinder.js`'s `bookComparison`
-field. The best-odds book and the best-EV book are always the same book for
-a fixed model probability — that's expected math, not a UI bug, and the
-methodology section says so explicitly.
+The board used to show a best-price/best-EV comparison across six books
+(`.book-shop`) plus a click-to-compare per-book breakdown panel
+(`.book-compare`, toggled via `data-compare`). Both are gone at the user's
+explicit request: "I want your picks... not who has the best and worst
+odds." `valueFinder.js`'s `bookComparison` field (tested in
+`nfl-betting/test/valueFinder.test.js`) still exists and still works — it's
+just no longer surfaced as a UI list. Don't reintroduce a per-book price
+list anywhere on the board without the user asking for it back.
 
-## Click-to-compare (tap a pick's odds)
+## Our Pick, not market rankings
 
-Every pick's `.spread-block` is clickable (`role="button"`, keyboard-accessible)
-and toggles an adjacent `.book-compare` panel showing the per-book breakdown
-for that exact line — this is the interaction, not just the `.book-shop`
-best-price summary. Wiring: `data-compare="some-id"` on the trigger,
-`id="some-id"` on the `.book-compare` panel, toggled by the click-to-compare
-JS block (searches for `[data-compare]`).
-
-**Data honesty note**: WebSearch can summarize odds articles but can't
-reliably pull distinct per-book prices for lower-profile games — the actual
-odds-comparison sites (SportsBettingDime, VegasInsider, etc.) block
-WebFetch. Where only one or two books' numbers are independently confirmed,
-say so explicitly in the panel rather than inventing plausible-looking
-numbers for the rest — see the Hall of Fame Game example in the current
-build. This resolves for real once a live odds feed
-(`ODDS_API_KEY` → `nfl-betting/src/providers/oddsProvider.js`) is connected;
-the `bookComparison` field that powers this UI already works end-to-end in
-mock mode (tested in `nfl-betting/test/valueFinder.test.js`).
+Every futures rail (`.sb-card`), award/division/conference grid
+(`.div-card`), and game pick (`.spread-block`) states exactly one call,
+tagged `.pill.pick` / `.pick-badge` ("Our Pick"). Rails that used to just
+rank teams by market odds now lead with an `.sb-card.our-pick` (or
+`.div-card.our-pick`) featured entry; the rest of the field stays as
+supporting market context, not a competing ranked list. When the model
+genuinely has no edge over the market (e.g. a lopsided preseason line),
+the honest pick is "no play" — state that plainly rather than picking a
+side just to have one, and rather than quietly reintroducing hedge
+language like "Favorite vs. Value" pill pairs.
 
 ## Animation system
 
@@ -85,6 +80,18 @@ stay documented wherever this appears**: there's no free public
 defensive-player tracking data, so this only measures offensive skill-position
 strength/trend — not a real two-sided "these receivers vs. that specific
 cornerback" matchup.
+
+## Units (conviction-scaled stake size)
+
+Every committed pick shows a `.unit-badge` — a 1-5 dot scale plus the `Nu`
+label — sized by how much we actually like the pick, not a flat 1u on
+everything. Defined once in `nfl-betting/README.md#units`; the ledger's
+`units` field (`nfl-betting/data/picks-ledger.json`) drives it, and
+`trackRecord.js`'s `netUnits()` turns the settled ledger into the "Season
+Units" tile in the Track Record strip (`.record-strip`, 4 tiles now, not
+3 — Overall / Games / Props / Season Units). A pick that's genuinely "no
+play" (see Cardinals/USC examples) doesn't get a unit badge, since it was
+never committed to the ledger in the first place.
 
 ## Data sourcing standard for pick reasoning
 

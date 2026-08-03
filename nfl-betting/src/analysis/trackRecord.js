@@ -5,6 +5,8 @@
 // convention — a push is neither a win nor a loss) but pending picks still
 // count toward "picks on the board" totals shown elsewhere.
 
+import { americanToDecimal } from './probability.js';
+
 export function gradeSummary(picks, category = null) {
   const scoped = category ? picks.filter((p) => p.category === category) : picks;
   const wins = scoped.filter((p) => p.status === 'win').length;
@@ -46,6 +48,23 @@ export function longestStreak(picks, type = 'win') {
     }
   }
   return longest;
+}
+
+// Season-long running unit count — a win pays units * (decimal odds - 1),
+// a loss costs the full units staked, a push refunds (0 net), and pending
+// picks don't count yet (the risk hasn't resolved). `pick.units` should
+// already be a 1-5 conviction-scaled stake (see picksLedger.addPick); a
+// pick missing `units` defaults to 1 rather than being skipped, so an old
+// or hand-edited ledger entry still counts toward the total instead of
+// silently vanishing from it.
+export function netUnits(picks, category = null) {
+  const scoped = category ? picks.filter((p) => p.category === category) : picks;
+  return scoped.reduce((total, pick) => {
+    const units = pick.units ?? 1;
+    if (pick.status === 'win') return total + units * (americanToDecimal(pick.price) - 1);
+    if (pick.status === 'loss') return total - units;
+    return total; // push or pending: no change
+  }, 0);
 }
 
 // Which players are currently riding a hit streak on their props (most

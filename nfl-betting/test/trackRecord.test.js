@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { gradeSummary, currentStreak, longestStreak, playerStreaks } from '../src/analysis/trackRecord.js';
+import { gradeSummary, currentStreak, longestStreak, playerStreaks, netUnits } from '../src/analysis/trackRecord.js';
 
 function pick(overrides = {}) {
   return { id: 'x', category: 'game', status: 'pending', ...overrides };
@@ -89,4 +89,45 @@ test('playerStreaks surfaces only players currently on a win streak, hottest fir
 test('playerStreaks ignores game picks (only props are player-attributed)', () => {
   const picks = [pick({ category: 'game', player: 'Team Pick', status: 'win' })];
   assert.equal(playerStreaks(picks).length, 0);
+});
+
+test('netUnits: a win pays units * (decimal odds - 1)', () => {
+  // -110 -> decimal 1.9091 -> 3 units win pays 3 * 0.9091 = 2.727
+  const total = netUnits([pick({ status: 'win', price: -110, units: 3 })]);
+  assert.ok(Math.abs(total - 2.7272727) < 1e-4);
+});
+
+test('netUnits: a loss costs the full units staked, regardless of price', () => {
+  const total = netUnits([pick({ status: 'loss', price: -110, units: 4 })]);
+  assert.equal(total, -4);
+});
+
+test('netUnits: pushes and pending picks do not move the total', () => {
+  const total = netUnits([
+    pick({ status: 'push', price: -110, units: 5 }),
+    pick({ status: 'pending', price: -110, units: 5 }),
+  ]);
+  assert.equal(total, 0);
+});
+
+test('netUnits: missing units defaults to 1 instead of being skipped', () => {
+  const total = netUnits([pick({ status: 'loss', price: -110 })]);
+  assert.equal(total, -1);
+});
+
+test('netUnits: plus-money wins pay more than the units risked', () => {
+  // +150 -> decimal 2.5 -> 2 units win pays 2 * 1.5 = 3
+  const total = netUnits([pick({ status: 'win', price: 150, units: 2 })]);
+  assert.equal(total, 3);
+});
+
+test('netUnits sums across a mixed season and scopes by category', () => {
+  const picks = [
+    pick({ category: 'game', status: 'win', price: -110, units: 2 }),   // +1.818
+    pick({ category: 'game', status: 'loss', price: -110, units: 1 }),  // -1
+    pick({ category: 'prop', status: 'win', price: 120, units: 1 }),    // +1.2
+  ];
+  assert.ok(Math.abs(netUnits(picks) - (1.818181818 - 1 + 1.2)) < 1e-4);
+  assert.ok(Math.abs(netUnits(picks, 'game') - (1.818181818 - 1)) < 1e-4);
+  assert.ok(Math.abs(netUnits(picks, 'prop') - 1.2) < 1e-9);
 });
