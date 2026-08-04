@@ -154,3 +154,28 @@ test('omitting injuries entirely behaves exactly like an empty injuries object',
   };
   assert.equal(projectGame(args).projectedSpread, projectGame({ ...args, injuries: {} }).projectedSpread);
 });
+
+test('a flag-happy referee adds an informational note but never moves the projection', () => {
+  const base = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  const noReferee = projectGame(base);
+  const withReferee = projectGame({ ...base, referee: { name: 'Test Ref', penaltyRatio: 1.25 } });
+  assert.equal(noReferee.projectedSpread, withReferee.projectedSpread);
+  assert.equal(noReferee.projectedTotal, withReferee.projectedTotal);
+  assert.ok(withReferee.schemeNotes.some((n) => n.includes('Test Ref') && n.includes('penalties')));
+});
+
+test('a referee near league average (ratio close to 1) adds no note', () => {
+  const proj = projectGame({
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+    referee: { name: 'Average Ref', penaltyRatio: 1.02 },
+  });
+  assert.ok(!proj.schemeNotes.some((n) => n.includes('Average Ref')));
+});

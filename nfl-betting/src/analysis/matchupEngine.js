@@ -38,6 +38,11 @@ export function projectGame({
   injuries = {}, // optional { home, away } depth charts from providers/injuryProvider.js
   // fetchTeamDepthChart — only a confirmed Out/Doubtful/IR starting QB moves the
   // projection (see analysis/injuryImpact.js for why only QB gets a numeric effect).
+  referee = null, // optional { name, penaltyRatio } from analysis/refereeTendencies.js —
+  // >1 calls more penalties than league average. Informational note only, never a
+  // point/total adjustment (see refereeTendencies.js for why); also typically
+  // unavailable this far ahead of kickoff since crews aren't assigned until a few
+  // days out — omit unless the caller has a real, known assignment for this game.
 }) {
   const eloWinProb = matchupWinProbability({ homeRating: home.rating, awayRating: away.rating, neutralSite });
   const eloSpread = winProbToSpread(eloWinProb); // home margin implied by Elo
@@ -136,6 +141,7 @@ export function projectGame({
       ...describeQbInjuries(home.abbr, away.abbr, homeQbInjury, awayQbInjury),
       ...starterInjuryNotes(home.abbr, injuries.home),
       ...starterInjuryNotes(away.abbr, injuries.away),
+      ...describeRefereeTendency(referee),
       ...manualCoachNotes(home.abbr, away.abbr, coachNotes),
     ],
   };
@@ -156,6 +162,17 @@ function describeEpaEdge(homeAbbr, awayAbbr, epaImpliedSpread) {
   if (epaImpliedSpread == null) return [];
   if (epaImpliedSpread > 2) return [`${homeAbbr} grades out clearly better in per-play efficiency (EPA/play, offense and defense) than this matchup's raw numbers alone suggest`];
   if (epaImpliedSpread < -2) return [`${awayAbbr} grades out clearly better in per-play efficiency (EPA/play, offense and defense) than this matchup's raw numbers alone suggest`];
+  return [];
+}
+
+// Informational only — see refereeTendencies.js for why this doesn't move
+// point projections (penalty-rate effect sizes on scoring aren't
+// established well enough to state a confident point value the way the
+// QB-out penalty above is).
+function describeRefereeTendency(referee) {
+  if (!referee?.penaltyRatio) return [];
+  if (referee.penaltyRatio > 1.1) return [`Referee ${referee.name}'s games run heavier on penalties than league average (${referee.penaltyRatio.toFixed(2)}x) — expect more stoppages/free plays; lean toward the total accordingly`];
+  if (referee.penaltyRatio < 0.9) return [`Referee ${referee.name}'s games run lighter on penalties than league average (${referee.penaltyRatio.toFixed(2)}x) — expect a cleaner, faster-moving game; lean toward the under accordingly`];
   return [];
 }
 

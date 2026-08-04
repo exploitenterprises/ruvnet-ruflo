@@ -82,7 +82,8 @@ providers/            live data in                 analysis/                 rep
 │ (The Odds API)  │                          │ probability / statMath  │
 ├─────────────────┤                          └─────────────────────────┘
 │ nflverseProvider│ Next Gen Stats + play- ─▶ no key needed, GitHub-hosted
-│ (nflverse)      │ by-play (EPA/success)
+│ (nflverse)      │ by-play (EPA/success)     (feeds teamEpa.js + refereeTendencies.js)
+│                 │ + officiating crews
 ├─────────────────┤
 │ injuryProvider  │ depth chart + injury ───▶ no key needed (feeds injuryImpact.js)
 │ (ESPN)          │ status per player
@@ -158,6 +159,59 @@ providers/            live data in                 analysis/                 rep
   informational notes only (`starterInjuryNotes`) — same posture as
   `manualCoachNotes`, never silently reweights the model. A missing depth
   chart (fetch failure, bye week) is treated as "no injury data," not an error.
+- **Referee-crew tendencies** (`refereeTendencies.js`, fed by
+  `providers/nflverseProvider.js`'s `fetchOfficials`) — how many penalties/
+  penalty yards a given head referee's games run relative to league average,
+  computed from real historical data (nflverse's officials archive, joined
+  to its play-by-play by the legacy GSIS game id). **Two scope limits,
+  stated plainly**: (1) informational note only, never a point/total
+  adjustment — penalty-rate effect size on scoring isn't established well
+  enough to state a confident point value the way the QB-out penalty is; (2)
+  this is a lookup against *past* games — the NFL doesn't announce which
+  crew works an upcoming game until a few days before kickoff, so there's no
+  way to know this week's assignment far in advance. Real use is a
+  near-kickoff manual check (once an assignment is known, e.g. from ESPN's
+  boxscore/summary endpoint) via the optional `referee: { name, penaltyRatio }`
+  param on `projectGame`, not a standard input the weekly pipeline
+  auto-populates like EPA or injuries.
+- **Line movement** (`lineMovement.js` + `lineHistoryStore.js`) — how much a
+  game's market spread/total has moved since this pipeline first saw it,
+  computed from snapshots this project takes of its own real market-line
+  pulls over time (`data/cache/line-history-{nfl,cfb}.json`, git-ignored
+  like the ratings cache). **Why self-collected, not a feed**: two realistic
+  free sources for "betting market signals" were checked directly against
+  this environment's network, not assumed — public bet-percentage/
+  sharp-vs-public-money splits (Action Network, Covers consensus) are both
+  blocked at the network level here, same pattern as the CFB scouting sites
+  documented above; The Odds API's own historical-odds endpoint (confirmed
+  reachable — a real key gets real data) is gated behind a paid plan, a cost
+  gate rather than a technical one. So this tracks it for free, going
+  forward — the real limitation that creates: there's no "movement since
+  Tuesday" on the very first run for a game, only once this pipeline has
+  actually observed it more than once. Surfaced as informational notes
+  (`describeMovement`, half a point of total movement or more) in both the
+  weekly NFL report and the CFB edge board — market context, not something
+  that feeds back into the model's own projection.
+- **Head-to-head / division ATS history** (`atsHistory.js`, fed live by
+  `cfbAtsHistory.js` and `nflHeadToHead.js`) — straight-up record, average
+  point differential, and (when spread data is available) against-the-spread
+  record between two specific teams or across a team's division/conference
+  rivals, built entirely from data this project already gathers elsewhere —
+  no new external source. **Real asymmetry between the two leagues, checked
+  directly**: CFBD's `/lines` returns real historical spreads for past
+  weeks/seasons (confirmed by direct use backtesting `cfbEdgeBoard.js`), so
+  `cfbAtsHistory.js` gets true ATS. NFL doesn't have a free equivalent —
+  ESPN's public boxscore/summary endpoint's `pickcenter`/`odds`/
+  `againstTheSpread` fields were checked against real completed games and
+  come back empty every time (it doesn't retain closing lines once a game's
+  over), and The Odds API's historical-odds endpoint is paid-tier only (same
+  finding as line movement, above). So `nflHeadToHead.js` is straight-up
+  only — real and useful, just not ATS. Verified live: correctly reproduced
+  the actual 2023-2025 Ohio State/Michigan results (including the real 2024
+  upset — Ohio State was a 20-point home favorite and lost outright) from
+  live CFBD data. Not part of the standard weekly pipeline (ESPN has no bulk
+  season-schedule endpoint, so NFL multi-season history costs 18 scoreboard
+  calls per season) — call it on demand, not on every refresh.
 - **Scheme tendencies** (`schemeTendencies.js`) — "coach scheme" signal
   derived *empirically* from each team's own play-calling data (tempo, pass
   rate, sack rates, 4th-down aggressiveness) relative to league average,

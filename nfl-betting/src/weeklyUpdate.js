@@ -9,6 +9,8 @@ import { renderWeeklyMarkdown } from './report.js';
 import { loadCoachNotes } from './analysis/schemeTendencies.js';
 import { computeTeamEpaSplits } from './analysis/teamEpa.js';
 import { buildEdgeBoard, nflMarketLine } from './analysis/edgeBoard.js';
+import { recordSnapshot, computeMovement, describeMovement } from './analysis/lineMovement.js';
+import { loadNflLineHistory, saveNflLineHistory } from './lineHistoryStore.js';
 import * as mock from './providers/mockData.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -198,6 +200,20 @@ async function runWithLiveData({ season, week, generatedAt }) {
   const marketLinesByGame = Object.fromEntries(Object.entries(linesByGame).map(([key, gameLines]) => [key, nflMarketLine(gameLines)]));
   const edgeBoard = buildEdgeBoard(projections, marketLinesByGame);
 
+  // Line movement: this pipeline's own real market-line pulls, snapshotted
+  // over time (see analysis/lineMovement.js for why this is self-collected
+  // rather than a paid historical-odds feed or a public bet-percentage
+  // source — both were checked directly and ruled out, not assumed). A
+  // fresh game (first time this pipeline has ever seen it) has no movement
+  // to report yet — that's expected, not a failure.
+  let lineHistory = await loadNflLineHistory();
+  for (const [key, line] of Object.entries(marketLinesByGame)) {
+    lineHistory = recordSnapshot(lineHistory, key, line, generatedAt);
+  }
+  await saveNflLineHistory(lineHistory);
+  const lineMovementNotes = Object.keys(marketLinesByGame)
+    .flatMap((key) => describeMovement(key, computeMovement(lineHistory, key)));
+
   const teamsForSim = Object.fromEntries(Object.keys(TEAMS).map((abbr) => [abbr, { rating: ratings[abbr], currentWins: 0, currentLosses: 0, currentTies: 0 }]));
   // Live mode: the remaining schedule and current W-L records should be
   // pulled from statsProvider (full-season scoreboard fetch across weeks);
@@ -206,8 +222,8 @@ async function runWithLiveData({ season, week, generatedAt }) {
   const futuresValue = [];
 
   const source = `live (ESPN + The Odds API${epaAvailable ? ' + nflverse EPA' : ''}${injuriesAvailable ? ' + starter injuries' : ''})`;
-  const markdown = renderWeeklyMarkdown({ season, week, source, projections, valueBets, futuresValue, edgeBoard, generatedAt });
-  return { season, week, source: 'live', generatedAt, projections, valueBets, futuresValue, edgeBoard, markdown };
+  const markdown = renderWeeklyMarkdown({ season, week, source, projections, valueBets, futuresValue, edgeBoard, lineMovementNotes, generatedAt });
+  return { season, week, source: 'live', generatedAt, projections, valueBets, futuresValue, edgeBoard, lineMovementNotes, markdown };
 }
 
 // ESPN's team-statistics field names aren't stable across categories; this is

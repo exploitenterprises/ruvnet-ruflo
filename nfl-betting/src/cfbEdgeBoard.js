@@ -44,6 +44,8 @@ import { computeLeagueAverages } from './analysis/leagueAverages.js';
 import { projectGame } from './analysis/matchupEngine.js';
 import { buildEdgeBoard, cfbMarketLine } from './analysis/edgeBoard.js';
 import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel } from './analysis/cfbStats.js';
+import { recordSnapshot, computeMovement, describeMovement } from './analysis/lineMovement.js';
+import { loadCfbLineHistory, saveCfbLineHistory } from './lineHistoryStore.js';
 
 export async function buildCfbEdgeBoard(season, week) {
   const cfbdProvider = await import('./providers/cfbdProvider.js');
@@ -95,5 +97,17 @@ export async function buildCfbEdgeBoard(season, week) {
     marketLinesByGame[`${record.awayTeam}@${record.homeTeam}`] = cfbMarketLine(record);
   }
 
-  return buildEdgeBoard(projections, marketLinesByGame);
+  // Line movement: same self-collected approach as the NFL side (see
+  // analysis/lineMovement.js for why) — this pipeline's own real market-line
+  // pulls, snapshotted over time.
+  const generatedAt = new Date().toISOString();
+  let lineHistory = await loadCfbLineHistory();
+  for (const [key, line] of Object.entries(marketLinesByGame)) {
+    lineHistory = recordSnapshot(lineHistory, key, line, generatedAt);
+  }
+  await saveCfbLineHistory(lineHistory);
+  const lineMovementNotes = Object.keys(marketLinesByGame)
+    .flatMap((key) => describeMovement(key, computeMovement(lineHistory, key)));
+
+  return { edgeBoard: buildEdgeBoard(projections, marketLinesByGame), lineMovementNotes };
 }

@@ -83,7 +83,8 @@ const RUSHING_NUMERIC = ['season', 'week', 'efficiency', 'percent_attempts_gte_e
   'rush_attempts', 'rush_yards', 'expected_rush_yards', 'rush_yards_over_expected', 'avg_rush_yards',
   'rush_yards_over_expected_per_att', 'rush_pct_over_expected', 'rush_touchdowns'];
 
-const PBP_NUMERIC = ['week', 'down', 'epa', 'success', 'qb_epa'];
+const PBP_NUMERIC = ['week', 'down', 'epa', 'success', 'qb_epa', 'penalty', 'penalty_yards'];
+const OFFICIALS_NUMERIC = ['season', 'week', 'jersey_number'];
 
 export async function fetchNgsReceiving() {
   return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_receiving.csv.gz'), RECEIVING_NUMERIC);
@@ -102,4 +103,25 @@ export async function fetchNgsRushing() {
 // projection out of 372 column names that could drift release to release).
 export async function fetchPbp(season) {
   return coerceNumeric(await fetchGzippedCsv('pbp', `play_by_play_${season}.csv.gz`), PBP_NUMERIC);
+}
+
+// Every officiating crew member for every game back to 2015 (release tag
+// "officials") — confirmed reachable the same way as the other nflverse
+// releases. One row per {game, official}; `position` includes 'Referee'
+// (the crew chief, whose name is what betting-market discussion of
+// "referee tendencies" actually refers to) plus every other on-field
+// position and a long tail of alternates. Joins to fetchPbp's rows via
+// `game_id` here == pbp's `old_game_id` (the legacy numeric GSIS id, not
+// pbp's own `game_id`, which is season_week_away_home-formatted) — see
+// analysis/refereeTendencies.js.
+//
+// Honest limit: this is a historical archive of who officiated PAST games,
+// not a schedule of upcoming crew assignments — the NFL doesn't announce
+// officiating crews until a few days before kickoff, so there's no way to
+// know which referee is working next week's game this far out. Real use is
+// a near-kickoff lookup once an assignment is known (e.g. from ESPN's
+// boxscore/summary endpoint once it's posted), not a standard input to the
+// week-ahead pipeline the other signals feed.
+export async function fetchOfficials() {
+  return coerceNumeric(await fetchGzippedCsv('officials', 'officials.csv.gz'), OFFICIALS_NUMERIC);
 }
