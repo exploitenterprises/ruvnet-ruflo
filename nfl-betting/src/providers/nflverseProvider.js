@@ -11,12 +11,18 @@
 // There is no free public defensive-player tracking data (separation
 // allowed, coverage grades, etc.); that gap is real and stays undocumented
 // rather than faked — see positionMatchup.js.
+//
+// Also covers full play-by-play (fetchPbp — release tag "pbp"), the source
+// for team-level EPA/success-rate splits computed in src/analysis/teamEpa.js.
+// A season file is ~19MB gzipped / ~48k rows / 372 columns and takes several
+// seconds to parse — fine for a weekly batch job, not something to call from
+// a hot path or the test suite (teamEpa.js's tests use small fixture rows).
 
-const RELEASE_BASE = 'https://github.com/nflverse/nflverse-data/releases/download/nextgen_stats';
+const RELEASE_ROOT = 'https://github.com/nflverse/nflverse-data/releases/download';
 
-async function fetchGzippedCsv(filename) {
-  const res = await fetch(`${RELEASE_BASE}/${filename}`, { redirect: 'follow' });
-  if (!res.ok) throw new Error(`nflverse-data ${res.status} ${res.statusText} for ${filename}`);
+async function fetchGzippedCsv(releaseTag, filename) {
+  const res = await fetch(`${RELEASE_ROOT}/${releaseTag}/${filename}`, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`nflverse-data ${res.status} ${res.statusText} for ${releaseTag}/${filename}`);
   const buf = new Uint8Array(await res.arrayBuffer());
   const zlib = await import('node:zlib');
   const csv = zlib.gunzipSync(buf).toString('utf8');
@@ -77,12 +83,23 @@ const RUSHING_NUMERIC = ['season', 'week', 'efficiency', 'percent_attempts_gte_e
   'rush_attempts', 'rush_yards', 'expected_rush_yards', 'rush_yards_over_expected', 'avg_rush_yards',
   'rush_yards_over_expected_per_att', 'rush_pct_over_expected', 'rush_touchdowns'];
 
+const PBP_NUMERIC = ['week', 'down', 'epa', 'success', 'qb_epa'];
+
 export async function fetchNgsReceiving() {
-  return coerceNumeric(await fetchGzippedCsv('ngs_receiving.csv.gz'), RECEIVING_NUMERIC);
+  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_receiving.csv.gz'), RECEIVING_NUMERIC);
 }
 export async function fetchNgsPassing() {
-  return coerceNumeric(await fetchGzippedCsv('ngs_passing.csv.gz'), PASSING_NUMERIC);
+  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_passing.csv.gz'), PASSING_NUMERIC);
 }
 export async function fetchNgsRushing() {
-  return coerceNumeric(await fetchGzippedCsv('ngs_rushing.csv.gz'), RUSHING_NUMERIC);
+  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_rushing.csv.gz'), RUSHING_NUMERIC);
+}
+
+// Full play-by-play for one season — team abbreviations (posteam/defteam),
+// play_type, down, and nflfastR's precomputed epa/success columns are what
+// teamEpa.js needs; the other ~365 columns pass through unused but
+// unfiltered (cheaper to coerce five numeric fields than to hand-pick a
+// projection out of 372 column names that could drift release to release).
+export async function fetchPbp(season) {
+  return coerceNumeric(await fetchGzippedCsv('pbp', `play_by_play_${season}.csv.gz`), PBP_NUMERIC);
 }

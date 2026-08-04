@@ -81,7 +81,11 @@ providers/            live data in                 analysis/                 rep
 │ oddsProvider    │ sportsbook lines ───────▶ │ futures (Monte Carlo)   │
 │ (The Odds API)  │                          │ probability / statMath  │
 ├─────────────────┤                          └─────────────────────────┘
-│ nflverseProvider│ Next Gen Stats ─────────▶ no key needed, GitHub-hosted
+│ nflverseProvider│ Next Gen Stats + play- ─▶ no key needed, GitHub-hosted
+│ (nflverse)      │ by-play (EPA/success)
+├─────────────────┤
+│ injuryProvider  │ depth chart + injury ───▶ no key needed (feeds injuryImpact.js)
+│ (ESPN)          │ status per player
 ├─────────────────┤
 │ cfbdProvider    │ CFB stats/lines/talent ─▶ needs CFBD_API_KEY (see below)
 │ (collegefootballdata.com)
@@ -122,6 +126,38 @@ providers/            live data in                 analysis/                 rep
   or OAuth needed, and it's the one live-data source confirmed to work from
   this project's sandboxed dev environment when most sports-data APIs are
   network-blocked.
+- **EPA/play** (`teamEpa.js`, fed by `providers/nflverseProvider.js`'s
+  `fetchPbp`) — expected points added per play, the efficiency metric the
+  wider analytics community (nflfastR, PFF, modern Football Outsiders work)
+  treats as the strongest single per-play signal available, ahead of
+  points/yards-per-game, because it credits every play for the down/distance/
+  field-position situation it happened in rather than just its outcome.
+  Aggregated from nflverse's public play-by-play (already-computed `epa`/
+  `success` columns from nflfastR) into an offensive and defensive EPA/play +
+  success-rate split per team, scoped to completed games only
+  (`throughWeek`) so there's no lookahead into the week being projected. In
+  `matchupEngine.js` it's folded in as a third, independently-derived margin
+  estimate alongside the Elo-implied and efficiency(PPG)-implied margins
+  (35/35/30 weighting when available) rather than a small capped nudge like
+  the scheme/NGS adjustments — a deliberate choice reflecting how much more
+  predictive per-play EPA is than the drive-level stats the rest of the
+  engine is built on. Falls back cleanly to the pre-EPA two-way blend when
+  play-by-play isn't available yet (early season, or a fetch failure) — see
+  `weeklyUpdate.js`'s live-data path.
+- **Starter injuries** (`injuryImpact.js`, fed by `providers/injuryProvider.js`'s
+  `fetchTeamDepthChart`) — ESPN's public depth-chart endpoint is genuinely
+  rank-ordered per position with each athlete's current injury designation
+  attached, so this can assert "the starting QB is Out" instead of guessing
+  starter status from unordered roster data. **Scope, deliberately narrow**:
+  only a confirmed Out/Doubtful/Injured Reserve/PUP/Suspended starting QB
+  moves the projection — a flat, capped point subtraction (`QB_OUT_POINT_PENALTY`,
+  currently 3) reflecting the commonly-cited market effect of a backup QB
+  start, applied last so it isn't compounded by the multiplicative
+  adjustments above it. Every other position's real injury impact varies too
+  much by player/scheme to state a single honest number, so those surface as
+  informational notes only (`starterInjuryNotes`) — same posture as
+  `manualCoachNotes`, never silently reweights the model. A missing depth
+  chart (fetch failure, bye week) is treated as "no injury data," not an error.
 - **Scheme tendencies** (`schemeTendencies.js`) — "coach scheme" signal
   derived *empirically* from each team's own play-calling data (tempo, pass
   rate, sack rates, 4th-down aggressiveness) relative to league average,

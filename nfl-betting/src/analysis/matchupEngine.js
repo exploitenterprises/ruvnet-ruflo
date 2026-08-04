@@ -2,6 +2,13 @@ import { matchupWinProbability, winProbToSpread } from './powerRatings.js';
 import { computeSchemeTendencies, passRushMismatch } from './schemeTendencies.js';
 import { weatherAdjustment } from './weatherImpact.js';
 import { positionMatchupEdge } from './positionMatchup.js';
+import { epaMatchupEdgePerPlay } from './teamEpa.js';
+import { findStarterInjury, starterInjuryNotes, QB_OUT_POINT_PENALTY } from './injuryImpact.js';
+
+// Typical NFL offensive plays/game — used only to convert an EPA/play edge
+// into a point-equivalent margin (same fallback value schemeTendencies.js
+// implicitly assumes via its playsPerGame league-average usage).
+const AVG_PLAYS_PER_GAME = 64;
 
 // Ratio-based unit projection: expected points a unit produces/allows relative
 // to league average, in the style of a simplified opponent-adjusted efficiency
@@ -25,6 +32,12 @@ export function projectGame({
   ngsEdges = {}, // optional Next Gen Stats position-group edges (see positionMatchup.js) —
   // { homeReceivingEdge, awayReceivingEdge, homeRushingEdge, awayRushingEdge }, each a
   // positionMatchupEdge() ratio (>1 favors the offense). Omit any/all to skip that adjustment.
+  epaSplits = {}, // optional { home, away } team EPA/play splits from teamEpa.js
+  // (computeTeamEpaSplits output for each team) — the strongest single per-play
+  // efficiency signal available (nflfastR EPA). Omit to skip this adjustment.
+  injuries = {}, // optional { home, away } depth charts from providers/injuryProvider.js
+  // fetchTeamDepthChart — only a confirmed Out/Doubtful/IR starting QB moves the
+  // projection (see analysis/injuryImpact.js for why only QB gets a numeric effect).
 }) {
   const eloWinProb = matchupWinProbability({ homeRating: home.rating, awayRating: away.rating, neutralSite });
   const eloSpread = winProbToSpread(eloWinProb); // home margin implied by Elo
@@ -41,8 +54,16 @@ export function projectGame({
 
   // Blend the efficiency-model margin with the Elo-implied margin (ensemble
   // of two independently-derived estimates reduces variance vs either alone).
+  // When real EPA/play data is available (epaSplits), fold it in as a third,
+  // independently-derived estimate — EPA/play is the strongest single
+  // per-play efficiency signal available, so it gets a full ensemble share
+  // rather than a capped nudge like the scheme/NGS adjustments below.
   const effMargin = homePointsEst - awayPointsEst;
-  const blendedMargin = effMargin * 0.5 + eloSpread * 0.5;
+  const epaEdgePerPlay = epaMatchupEdgePerPlay(epaSplits.home, epaSplits.away);
+  const epaImpliedSpread = epaEdgePerPlay != null ? epaEdgePerPlay * AVG_PLAYS_PER_GAME : null;
+  const blendedMargin = epaImpliedSpread != null
+    ? effMargin * 0.35 + eloSpread * 0.35 + epaImpliedSpread * 0.30
+    : effMargin * 0.5 + eloSpread * 0.5;
   const shift = (blendedMargin - effMargin) / 2;
   homePointsEst += shift;
   awayPointsEst -= shift;
@@ -80,6 +101,15 @@ export function projectGame({
   homePointsEst *= wx.totalMultiplier;
   awayPointsEst *= wx.totalMultiplier;
 
+  // Confirmed starting-QB injury: a flat point subtraction (not a
+  // multiplier — see injuryImpact.js for why this is the one position that
+  // gets a numeric adjustment at all) applied last so it isn't compounded
+  // or diminished by the multiplicative adjustments above.
+  const homeQbInjury = findStarterInjury(injuries.home, 'qb');
+  const awayQbInjury = findStarterInjury(injuries.away, 'qb');
+  if (homeQbInjury) homePointsEst -= QB_OUT_POINT_PENALTY;
+  if (awayQbInjury) awayPointsEst -= QB_OUT_POINT_PENALTY;
+
   const projectedSpread = homePointsEst - awayPointsEst; // positive => home favored
   const projectedTotal = homePointsEst + awayPointsEst;
 
@@ -102,6 +132,10 @@ export function projectGame({
     schemeNotes: [
       ...describeSchemeEdges(home.abbr, away.abbr, homeScheme, awayScheme),
       ...describeNgsEdges(home.abbr, away.abbr, homeNgsEdge, awayNgsEdge),
+      ...describeEpaEdge(home.abbr, away.abbr, epaImpliedSpread),
+      ...describeQbInjuries(home.abbr, away.abbr, homeQbInjury, awayQbInjury),
+      ...starterInjuryNotes(home.abbr, injuries.home),
+      ...starterInjuryNotes(away.abbr, injuries.away),
       ...manualCoachNotes(home.abbr, away.abbr, coachNotes),
     ],
   };
@@ -114,6 +148,22 @@ function combineNgsEdges(...edges) {
   const present = edges.filter((e) => e != null && Number.isFinite(e));
   if (present.length === 0) return 1;
   return present.reduce((s, e) => s + e, 0) / present.length;
+}
+
+// EPA-implied spread is in points (home perspective); a couple points is a
+// real edge on the strongest per-play efficiency signal available.
+function describeEpaEdge(homeAbbr, awayAbbr, epaImpliedSpread) {
+  if (epaImpliedSpread == null) return [];
+  if (epaImpliedSpread > 2) return [`${homeAbbr} grades out clearly better in per-play efficiency (EPA/play, offense and defense) than this matchup's raw numbers alone suggest`];
+  if (epaImpliedSpread < -2) return [`${awayAbbr} grades out clearly better in per-play efficiency (EPA/play, offense and defense) than this matchup's raw numbers alone suggest`];
+  return [];
+}
+
+function describeQbInjuries(homeAbbr, awayAbbr, homeQbInjury, awayQbInjury) {
+  const notes = [];
+  if (homeQbInjury) notes.push(`${homeAbbr} starting QB ${homeQbInjury.player} is ${homeQbInjury.status.toLowerCase()}${homeQbInjury.note ? ` — ${homeQbInjury.note}` : ''} — projection docked ${QB_OUT_POINT_PENALTY} points`);
+  if (awayQbInjury) notes.push(`${awayAbbr} starting QB ${awayQbInjury.player} is ${awayQbInjury.status.toLowerCase()}${awayQbInjury.note ? ` — ${awayQbInjury.note}` : ''} — projection docked ${QB_OUT_POINT_PENALTY} points`);
+  return notes;
 }
 
 function describeNgsEdges(homeAbbr, awayAbbr, homeNgsEdge, awayNgsEdge) {

@@ -349,25 +349,31 @@
   .tab-btn:active { transform: translateY(0) scale(0.97); }
   #tab-nfl-futures:checked ~ .tab-switch label[for="tab-nfl-futures"],
   #tab-nfl-props:checked ~ .tab-switch label[for="tab-nfl-props"],
-  #tab-nfl-games:checked ~ .tab-switch label[for="tab-nfl-games"] {
+  #tab-nfl-games:checked ~ .tab-switch label[for="tab-nfl-games"],
+  #tab-nfl-edge:checked ~ .tab-switch label[for="tab-nfl-edge"] {
     background: color-mix(in srgb, var(--accent) 16%, var(--surface)); border-color: var(--accent); color: var(--accent);
   }
   #tab-cfb-futures:checked ~ .tab-switch label[for="tab-cfb-futures"],
-  #tab-cfb-games:checked ~ .tab-switch label[for="tab-cfb-games"] {
+  #tab-cfb-games:checked ~ .tab-switch label[for="tab-cfb-games"],
+  #tab-cfb-edge:checked ~ .tab-switch label[for="tab-cfb-edge"] {
     background: color-mix(in srgb, var(--accent-cfb) 16%, var(--surface)); border-color: var(--accent-cfb); color: var(--accent-cfb);
   }
   #tab-nfl-futures:focus-visible ~ .tab-switch label[for="tab-nfl-futures"],
   #tab-nfl-props:focus-visible ~ .tab-switch label[for="tab-nfl-props"],
   #tab-nfl-games:focus-visible ~ .tab-switch label[for="tab-nfl-games"],
+  #tab-nfl-edge:focus-visible ~ .tab-switch label[for="tab-nfl-edge"],
   #tab-cfb-futures:focus-visible ~ .tab-switch label[for="tab-cfb-futures"],
-  #tab-cfb-games:focus-visible ~ .tab-switch label[for="tab-cfb-games"] { outline: 2px solid var(--text); outline-offset: 2px; }
+  #tab-cfb-games:focus-visible ~ .tab-switch label[for="tab-cfb-games"],
+  #tab-cfb-edge:focus-visible ~ .tab-switch label[for="tab-cfb-edge"] { outline: 2px solid var(--text); outline-offset: 2px; }
 
   .panel { display: none; }
   #tab-nfl-futures:checked ~ .panel-nfl-futures { display: block; }
   #tab-nfl-props:checked ~ .panel-nfl-props { display: block; }
   #tab-nfl-games:checked ~ .panel-nfl-games { display: block; }
+  #tab-nfl-edge:checked ~ .panel-nfl-edge { display: block; }
   #tab-cfb-futures:checked ~ .panel-cfb-futures { display: block; }
   #tab-cfb-games:checked ~ .panel-cfb-games { display: block; }
+  #tab-cfb-edge:checked ~ .panel-cfb-edge { display: block; }
 
   .cfb-theme .eyebrow { color: var(--accent-cfb-2); }
   .cfb-theme .value-card .stripe { background: linear-gradient(180deg, var(--accent-cfb), var(--accent-cfb-2)); }
@@ -560,14 +566,18 @@
   <input type="radio" name="tabs" id="tab-nfl-futures" class="tab-input" checked>
   <input type="radio" name="tabs" id="tab-nfl-props" class="tab-input">
   <input type="radio" name="tabs" id="tab-nfl-games" class="tab-input">
+  <input type="radio" name="tabs" id="tab-nfl-edge" class="tab-input">
   <input type="radio" name="tabs" id="tab-cfb-futures" class="tab-input">
   <input type="radio" name="tabs" id="tab-cfb-games" class="tab-input">
+  <input type="radio" name="tabs" id="tab-cfb-edge" class="tab-input">
   <div class="tab-switch">
     <label for="tab-nfl-futures" class="tab-btn">🏈 NFL Futures</label>
     <label for="tab-nfl-props" class="tab-btn">🎯 NFL Props</label>
     <label for="tab-nfl-games" class="tab-btn">📋 NFL Picks</label>
+    <label for="tab-nfl-edge" class="tab-btn">📐 NFL Edge Board</label>
     <label for="tab-cfb-futures" class="tab-btn">🎓 CFB Futures</label>
     <label for="tab-cfb-games" class="tab-btn">📋 CFB Picks</label>
+    <label for="tab-cfb-edge" class="tab-btn">📐 CFB Edge Board</label>
   </div>
 
   <div class="panel panel-nfl-futures">
@@ -856,6 +866,38 @@
 
   </div>
 
+  <div class="panel panel-nfl-edge">
+
+  <section>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Model vs. Market</p>
+        <h2>Edge Board</h2>
+        <p>Every game on the week's slate, model spread and total next to the market's — ranked by how much they disagree. <b>Not picks</b> — no side is recommended here, just the numbers side by side so you can decide what the gap is worth to you.</p>
+      </div>
+    </div>
+    <div class="empty-state">
+      <div class="icon">📐</div>
+      <h3>Populates once Week 1 lines post</h3>
+      <p>This board needs a real posted slate with real market spreads/totals to compare against — there's nothing to project against a market that doesn't exist yet. Live once regular-season lines are up; format preview below.</p>
+    </div>
+    <div class="value-list" style="margin-top:14px; opacity:0.72;">
+      <div class="value-card">
+        <div class="stripe"></div>
+        <div class="body">
+          <div class="top">
+            <span class="team"><span data-team="BUF">BUF</span> @ <span data-team="KC">KC</span></span>
+            <span class="market">Gap 4.7 pts · spread</span>
+          </div>
+          <p class="why"><b>Spread</b> — model KC&nbsp;-6.5 · market KC&nbsp;-1.8 (gap 4.7)<br><b>Total</b> — model 48.5 · market 46.0 (gap 2.5)</p>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12.5px; color:var(--text-dim); margin-top:10px;">Format preview, not real numbers. Ranked descending by whichever of spread-gap/total-gap is larger for that game. Powered by the same matchup engine as the rest of this board — see <span class="num">src/analysis/edgeBoard.js</span> and <span class="num">src/weeklyUpdate.js</span> in the repo.</p>
+  </section>
+
+  </div>
+
   <div class="panel panel-cfb-futures cfb-theme">
 
   <section>
@@ -982,6 +1024,38 @@
       <p class="reasoning">This isn't a value spot, it's a market snapshot — a -50000 moneyline means the book is basically taking the game off the board as a betting proposition, so there's no spread lean worth throwing out either. Not logging a side here; the real signal shows up once conference play and ranked matchups are live. Also on Week 0: North Carolina vs. TCU in Dublin, and NC State vs. Virginia in Rio de Janeiro — the sport's first game in Brazil.</p>
       <div class="props-note"><b>Props watch, not picks yet:</b> too early for posted player menus on Week 0 games. Once ranked matchups are on the board (Week 1 onward), expect QB passing yards/TDs, workhorse-RB rushing props, and WR1 receiving yards from the actual posted lines — not invented numbers.</div>
     </div>
+  </section>
+
+  </div>
+
+  <div class="panel panel-cfb-edge cfb-theme">
+
+  <section>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Model vs. Market</p>
+        <h2>Edge Board</h2>
+        <p>Every game on the week's CFB slate, model spread and total next to the market's — ranked by how much they disagree. <b>Not picks</b> — no side is recommended here, just the numbers side by side so you can decide what the gap is worth to you.</p>
+      </div>
+    </div>
+    <div class="empty-state">
+      <div class="icon">📐</div>
+      <h3>Populates once Week 0/1 lines post</h3>
+      <p>This board needs a real posted slate with real market spreads/totals to compare against — there's nothing to project against a market that doesn't exist yet. Live once the season's real lines are up; format preview below.</p>
+    </div>
+    <div class="value-list" style="margin-top:14px; opacity:0.72;">
+      <div class="value-card">
+        <div class="stripe"></div>
+        <div class="body">
+          <div class="top">
+            <span class="team">Marshall @ Louisiana</span>
+            <span class="market">Gap 6.2 pts · total</span>
+          </div>
+          <p class="why"><b>Spread</b> — model Louisiana&nbsp;-2.5 · market Louisiana&nbsp;-2.5 (gap 0.0)<br><b>Total</b> — model 54.2 · market 48.0 (gap 6.2)</p>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12.5px; color:var(--text-dim); margin-top:10px;">Format preview, not real numbers. Ranked descending by whichever of spread-gap/total-gap is larger for that game. Uses CFBD's own Elo ratings plus real season stats — see <span class="num">src/cfbEdgeBoard.js</span> in the repo for the full methodology and its stated v1 gaps (no weather/EPA/injury signal yet for CFB).</p>
   </section>
 
   </div>

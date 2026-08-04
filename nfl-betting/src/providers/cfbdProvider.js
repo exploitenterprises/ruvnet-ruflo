@@ -7,6 +7,15 @@
 //
 // Needs api.collegefootballdata.com allowlisted for outbound network access
 // in this environment's settings — see nfl-betting/README.md.
+//
+// CFBD's JSON is camelCase throughout (homeTeam, homePoints, startDate,
+// neutralSite, etc.) — confirmed by direct inspection of live responses,
+// not assumed from docs. /lines uses the sign convention "spread is the
+// home team's spread" (negative = home favored), the opposite of this
+// project's projectedSpread convention (positive = home favored) — anything
+// comparing the two must negate one of them. /talent's per-team field is
+// named "team", not "school" (this file's fetchTalentComposite normalizes
+// it to `school` in its return value to match fetchFbsTeams' shape).
 
 const BASE = 'https://api.collegefootballdata.com';
 
@@ -34,7 +43,7 @@ export async function fetchFbsTeams(year) {
 // thin on talent, or vice versa).
 export async function fetchTalentComposite(year) {
   const rows = await getJson(`/talent?year=${year}`);
-  return rows.map((r) => ({ school: r.school, talent: r.talent }));
+  return rows.map((r) => ({ school: r.team, talent: r.talent }));
 }
 
 // Season-to-date advanced team stats (success rate, PPA/EPA-equivalent,
@@ -46,6 +55,33 @@ export async function fetchAdvancedTeamStats(year, team) {
   return getJson(`/stats/season/advanced?${params}`);
 }
 
+// Plain box-score-style season totals (netPassingYards, rushingYards, sacks,
+// thirdDownConversions/thirdDowns, games, etc.) — one call returns every FBS
+// team as a flat array of {team, statName, statValue} rows (confirmed by
+// direct inspection: 8568 rows / 136 teams for a full season). This is the
+// CFB analogue of statsProvider.js's fetchTeamSeasonStats, and what
+// cfbWeeklyUpdate.js maps into matchupEngine's expected shape — unlike
+// fetchAdvancedTeamStats, this has no points-for/against, so those still
+// need to be derived from fetchGames.
+export async function fetchSeasonStats(year, { team } = {}) {
+  const params = new URLSearchParams({ year: String(year) });
+  if (team) params.set('team', team);
+  return getJson(`/stats/season?${params}`);
+}
+
+// CFBD's own Elo ratings, one call for every FBS team. League average lands
+// almost exactly on 1500 (confirmed by direct inspection: 1503 avg / 1509
+// median across 136 teams for the 2025 season) — matches this project's
+// matchupEngine/powerRatings.js LEAGUE_AVG_RATING baseline closely enough to
+// plug straight into matchupWinProbability's standard Elo formula. Real,
+// established ratings (used in place of building a from-scratch CFB Elo
+// engine) — see cfbWeeklyUpdate.js for the one known approximation this
+// creates (the Elo-to-point-spread conversion constant is NFL-calibrated).
+export async function fetchEloRatings(year) {
+  const rows = await getJson(`/ratings/elo?year=${year}`);
+  return rows.map((r) => ({ team: r.team, conference: r.conference, elo: r.elo }));
+}
+
 export async function fetchGames(year, { week, seasonType = 'regular' } = {}) {
   const params = new URLSearchParams({ year: String(year), seasonType });
   if (week) params.set('week', String(week));
@@ -53,11 +89,11 @@ export async function fetchGames(year, { week, seasonType = 'regular' } = {}) {
   return games.map((g) => ({
     id: g.id,
     week: g.week,
-    startDate: g.start_date,
+    startDate: g.startDate,
     completed: g.completed,
-    neutralSite: g.neutral_site,
-    homeTeam: g.home_team, homePoints: g.home_points,
-    awayTeam: g.away_team, awayPoints: g.away_points,
+    neutralSite: g.neutralSite,
+    homeTeam: g.homeTeam, homePoints: g.homePoints,
+    awayTeam: g.awayTeam, awayPoints: g.awayPoints,
     venue: g.venue,
   }));
 }
