@@ -32,9 +32,16 @@ async function getJson(path) {
   return res.json();
 }
 
+// `location` carries real per-stadium lat/lon/dome (confirmed live: e.g.
+// Ohio Stadium at 40.0016/-83.0197, dome: false) — CFBD publishes this
+// directly, so no hand-curated CFB stadium dataset (the NFL side's
+// data/stadiums.js) is needed for weather.
 export async function fetchFbsTeams(year) {
   const teams = await getJson(`/teams/fbs?year=${year}`);
-  return teams.map((t) => ({ school: t.school, abbreviation: t.abbreviation, conference: t.conference, classification: t.classification }));
+  return teams.map((t) => ({
+    school: t.school, abbreviation: t.abbreviation, conference: t.conference, classification: t.classification,
+    location: t.location ? { name: t.location.name, lat: t.location.latitude, lon: t.location.longitude, dome: !!t.location.dome } : null,
+  }));
 }
 
 // Team talent composite: a 247/On3-style aggregate ranking of roster talent,

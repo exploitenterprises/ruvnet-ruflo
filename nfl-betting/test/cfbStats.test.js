@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel } from '../src/analysis/cfbStats.js';
+import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel, mapCfbdAdvancedToEpaSplits } from '../src/analysis/cfbStats.js';
 
 test('groupStatsByTeam collapses flat {team, statName, statValue} rows into a per-team map', () => {
   const rows = [
@@ -66,4 +66,14 @@ test('mapCfbdStatsToModel maps real stat rows + points splits into matchupEngine
   assert.ok(Math.abs(profile.sackRate - 19 / 14) < 1e-9);
   assert.ok(Math.abs(profile.thirdDownPct - (79 / 182) * 100) < 1e-9);
   assert.equal(profile.priorSeasonPointDiffPerGame, 32 - 16.5);
+});
+
+test('mapCfbdAdvancedToEpaSplits maps nested offense.ppa/defense.ppa into the flat epaSplits shape', () => {
+  const rows = [
+    { team: 'Ohio State', offense: { ppa: 0.327 }, defense: { ppa: -0.014 } },
+    { team: 'No Data Team', offense: {}, defense: {} },
+  ];
+  const splits = mapCfbdAdvancedToEpaSplits(rows);
+  assert.deepEqual(splits['Ohio State'], { offEpaPerPlay: 0.327, defEpaPerPlay: -0.014 });
+  assert.equal(splits['No Data Team'], undefined); // no ppa on either side — not included, not faked as 0
 });

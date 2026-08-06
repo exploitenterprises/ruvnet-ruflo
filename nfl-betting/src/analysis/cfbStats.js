@@ -62,6 +62,25 @@ function fallbackProfile(team) {
   };
 }
 
+// CFBD's /stats/season/advanced returns nested offense.ppa / defense.ppa —
+// already a per-play predicted-points-added figure, the CFB analogue of
+// nflfastR's EPA/play (confirmed by direct inspection: Ohio State's 2025
+// offense.ppa of 0.327 and defense.ppa of -0.014 read exactly like an elite
+// offense/strong defense would in NFL EPA terms). Maps straight into the
+// same { offEpaPerPlay, defEpaPerPlay } shape teamEpa.js produces for the
+// NFL side so matchupEngine.js's epaSplits blend needs no CFB-specific branch.
+export function mapCfbdAdvancedToEpaSplits(advancedRows) {
+  const splits = {};
+  for (const row of advancedRows) {
+    if (row.offense?.ppa == null && row.defense?.ppa == null) continue;
+    splits[row.team] = {
+      offEpaPerPlay: row.offense?.ppa ?? null,
+      defEpaPerPlay: row.defense?.ppa ?? null,
+    };
+  }
+  return splits;
+}
+
 export function mapCfbdStatsToModel(team, statMap, pointsSplits) {
   const games = statMap?.games ?? 0;
   if (games === 0) return fallbackProfile(team);

@@ -33,7 +33,7 @@ function canonicalAbbr(espnAbbr) {
 }
 
 async function getJson(url) {
-  const { stdout } = await execFileAsync('curl', ['-sS', '-w', '\n%{http_code}', url]);
+  const { stdout } = await execFileAsync('curl', ['-sS', '-w', '\n%{http_code}', url], { maxBuffer: 20 * 1024 * 1024 });
   const splitAt = stdout.lastIndexOf('\n');
   const body = stdout.slice(0, splitAt);
   const statusCode = Number(stdout.slice(splitAt + 1).trim());

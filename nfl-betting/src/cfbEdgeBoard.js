@@ -9,13 +9,21 @@
 // Reuses matchupEngine.js as-is — it only cares about the {abbr, stats,
 // rating} shape, not which sport the numbers came from.
 //
-// Stated v1 gaps (extend the same way the NFL side's signals were added
-// incrementally — EPA, then starter injuries):
-// - No weather adjustment (no CFB stadium/lat-lon dataset built yet).
-// - No EPA signal (CFBD's advanced stats have a PPA/EPA-equivalent, not yet
-//   wired into teamEpa.js's shape — that module is nflverse-pbp-specific).
-// - No starter-injury signal (ESPN's depth-chart endpoint uses a different
-//   base URL for college-football, not yet wired — see injuryProvider.js).
+// v1 gaps (weather, EPA, starter injuries) closed — see the corresponding
+// value-add-not-hard-dependency wiring below, same posture as weeklyUpdate.js's
+// live NFL path: a provider failure degrades that one signal to "no data,"
+// never fails the whole board.
+// - Weather: CFBD's /teams/fbs `location` field carries real per-stadium
+//   lat/lon/dome (confirmed live, e.g. Ohio Stadium 40.0016/-83.0197,
+//   dome: false) — no hand-curated CFB stadium dataset needed.
+// - EPA: CFBD's /stats/season/advanced offense.ppa/defense.ppa is the CFB
+//   analogue of nflfastR's EPA/play (see analysis/cfbStats.js's
+//   mapCfbdAdvancedToEpaSplits for the direct-inspection confirmation).
+// - Starter injuries: ESPN's college-football depth-chart endpoint has the
+//   identical shape to the NFL one, just a different base URL and team-id
+//   space (see providers/injuryProvider.js's fetchCfbTeamDepthChart). Joined
+//   to CFBD's school names via ESPN's `location` field — confirmed live:
+//   all 136 CFBD FBS schools match an ESPN `location` exactly.
 // - Uses CFBD's own Elo ratings directly (real, established, covers all 136
 //   FBS teams — see providers/cfbdProvider.js's fetchEloRatings) rather than
 //   a from-scratch CFB Elo engine. cfbEloBacktest.js caught a real -2.4pt
@@ -50,19 +58,59 @@ import { computeLeagueAverages } from './analysis/leagueAverages.js';
 import { projectGame } from './analysis/matchupEngine.js';
 import { CONSTANTS as ELO_CONSTANTS } from './analysis/powerRatings.js';
 import { buildEdgeBoard, cfbMarketLine } from './analysis/edgeBoard.js';
-import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel } from './analysis/cfbStats.js';
+import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel, mapCfbdAdvancedToEpaSplits } from './analysis/cfbStats.js';
 import { recordSnapshot, computeMovement, describeMovement } from './analysis/lineMovement.js';
 import { loadCfbLineHistory, saveCfbLineHistory } from './lineHistoryStore.js';
 
 export async function buildCfbEdgeBoard(season, week) {
   const cfbdProvider = await import('./providers/cfbdProvider.js');
+  const weatherProvider = await import('./providers/weatherProvider.js');
+  const injuryProvider = await import('./providers/injuryProvider.js');
 
-  const [statRows, eloRows, allGames, lineRecords] = await Promise.all([
+  const [statRows, eloRows, allGames, lineRecords, fbsTeams] = await Promise.all([
     cfbdProvider.fetchSeasonStats(season),
     cfbdProvider.fetchEloRatings(season),
     cfbdProvider.fetchGames(season), // full season so far — points-for/against needs every completed game, not just this week's
     cfbdProvider.fetchLines(season, { week }),
+    cfbdProvider.fetchFbsTeams(season),
   ]);
+  const stadiumByTeam = Object.fromEntries(fbsTeams.filter((t) => t.location).map((t) => [t.school, t.location]));
+
+  // EPA is a value-add on top of the core projection, not a hard dependency
+  // — same posture as weeklyUpdate.js's nflverse EPA wiring: if CFBD's
+  // advanced-stats endpoint is unreachable, degrade to the pre-EPA blend
+  // rather than failing the whole board.
+  let epaSplitsByTeam = {};
+  try {
+    const advancedRows = await cfbdProvider.fetchAdvancedTeamStats(season);
+    epaSplitsByTeam = mapCfbdAdvancedToEpaSplits(advancedRows);
+  } catch {
+    epaSplitsByTeam = {};
+  }
+
+  // Starter-availability signal — same value-add-not-hard-dependency posture:
+  // a lookup-table or per-team depth-chart failure degrades that one team to
+  // "no injury data" (matchupEngine.js treats a missing depth chart as no
+  // adjustment) rather than failing the whole board.
+  let espnIdBySchool = {};
+  try {
+    espnIdBySchool = await injuryProvider.fetchCfbTeamIdsBySchool();
+  } catch {
+    espnIdBySchool = {};
+  }
+  const depthChartCache = {};
+  async function getDepthChart(school) {
+    if (school in depthChartCache) return depthChartCache[school];
+    let dc = null;
+    try {
+      const espnId = espnIdBySchool[school];
+      dc = espnId ? await injuryProvider.fetchCfbTeamDepthChart(espnId) : null;
+    } catch {
+      dc = null;
+    }
+    depthChartCache[school] = dc;
+    return dc;
+  }
 
   const statsByTeam = groupStatsByTeam(statRows);
   const eloByTeam = Object.fromEntries(eloRows.map((r) => [r.team, r.elo]));
@@ -91,12 +139,32 @@ export async function buildCfbEdgeBoard(season, week) {
     // some other reason) can't be projected — skipped rather than faked
     // with a league-average stand-in for a team we have no real data on.
     if (!seasonStats[g.homeTeam] || !seasonStats[g.awayTeam]) continue;
+
+    // Weather: skip entirely for a dome/unknown-venue home stadium or a
+    // neutral-site game (the home team's own stadium coords don't apply —
+    // same conservative "no adjustment" default weeklyUpdate.js uses for an
+    // unrecognized NFL stadium).
+    const stadium = stadiumByTeam[g.homeTeam];
+    let weather = { isDome: true };
+    if (!g.neutralSite && stadium && !stadium.dome && stadium.lat != null && stadium.lon != null) {
+      try {
+        weather = await weatherProvider.fetchGameWeather({ lat: stadium.lat, lon: stadium.lon, kickoffIso: g.startDate });
+      } catch (err) {
+        weather = { isDome: false, note: `weather fetch failed: ${err.message}` };
+      }
+    }
+
+    const [homeDepthChart, awayDepthChart] = await Promise.all([getDepthChart(g.homeTeam), getDepthChart(g.awayTeam)]);
+
     projections.push(projectGame({
       home: { abbr: g.homeTeam, stats: seasonStats[g.homeTeam], rating: eloByTeam[g.homeTeam] ?? 1500 },
       away: { abbr: g.awayTeam, stats: seasonStats[g.awayTeam], rating: eloByTeam[g.awayTeam] ?? 1500 },
       leagueAvg,
       neutralSite: g.neutralSite,
       eloPointsPerMargin: ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN,
+      weather,
+      epaSplits: { home: epaSplitsByTeam[g.homeTeam], away: epaSplitsByTeam[g.awayTeam] },
+      injuries: { home: homeDepthChart, away: awayDepthChart },
     }));
   }
 
