@@ -49,26 +49,60 @@ async function getJson(url) {
   return JSON.parse(body);
 }
 
-// Final scores + schedule for a given season/week. seasontype: 2 = regular season, 3 = postseason.
+// Real, observed failure mode (not hypothetical): the scoreboard endpoint
+// silently stopped honoring `year`/`week`/`seasontype` query params at some
+// point during a live session — a request for year=2025 week=1 returned
+// season.year: 2026 instead (the *next* season's not-yet-played opener),
+// with no error, no redirect, just a wrong-season payload shaped identically
+// to a right-season one. Caught only because a full-season backtest's
+// week-1 result happened to be re-checked against a known real score after
+// the drift occurred.
 //
-// Real, observed failure mode (not hypothetical): this endpoint silently
-// stopped honoring `year` at some point during a live session — a request
-// for year=2025 week=1 returned season.year: 2026 instead (the *next*
-// season's not-yet-played opener), with no error, no redirect, just a
-// wrong-season payload shaped identically to a right-season one. Caught only
-// because a full-season backtest's week-1 result happened to be re-checked
-// against a known real score after the drift occurred. Guarding here rather
-// than downstream: silently ingesting the wrong season would look like
-// ordinary (if unlucky) data to every caller — ratingsStore, the live
-// weekly pipeline, backtests — all of which trust `completed`/scores at
-// face value. Failing loudly with the season it actually got back turns a
-// silent data-corruption risk into an obvious, debuggable error instead.
-export async function fetchWeekScoreboard(season, week, seasontype = 2) {
-  const json = await getJson(`${BASE}/scoreboard?year=${season}&week=${week}&seasontype=${seasontype}`);
-  if (json.season?.year != null && json.season.year !== season) {
-    throw new Error(`ESPN scoreboard returned season ${json.season.year} for a year=${season} request (week ${week}) — the API silently ignored the year param.`);
+// Workaround: ESPN's `dates=` param (either a bare year for the season
+// calendar, or a YYYYMMDD-YYYYMMDD range for actual games) returns correct
+// EVENT data even when `year=`/the response's own `season` metadata field
+// doesn't — confirmed live: a dates=20240905-20240911 request returned real
+// September 2024 games while its `leagues[0].season` field claimed 2026.
+// So the `season` metadata label is unreliable and NOT used for validation
+// here; instead, each returned event's own `date` is checked against the
+// requested week's real date range (from ESPN's own published calendar —
+// fetchSeasonCalendar — not a hand-maintained "NFL Sundays" table) as the
+// actual content-based guard against silently ingesting the wrong week.
+const seasonCalendarCache = {};
+async function fetchSeasonCalendar(season) {
+  if (seasonCalendarCache[season]) return seasonCalendarCache[season];
+  const json = await getJson(`${BASE}/scoreboard?dates=${season}`);
+  const calendar = json.leagues?.[0]?.calendar ?? [];
+  const bySeasontype = Object.fromEntries(calendar.map((c) => [Number(c.value), c.entries ?? []]));
+  // Content check in place of the unreliable season-metadata field: the
+  // regular season's Week 1 has to actually start in the requested calendar
+  // year (true for every real NFL season — it always opens in September).
+  const week1Start = bySeasontype[2]?.[0]?.startDate;
+  if (!week1Start?.startsWith(`${season}-`)) {
+    throw new Error(`ESPN calendar for dates=${season} has regular-season Week 1 starting ${week1Start} — doesn't start in ${season} as expected, calendar is for the wrong season.`);
   }
-  return (json.events ?? []).map((event) => {
+  seasonCalendarCache[season] = bySeasontype;
+  return bySeasontype;
+}
+
+function toYyyymmdd(iso) {
+  return iso.slice(0, 10).replace(/-/g, '');
+}
+
+// Final scores + schedule for a given season/week. seasontype: 2 = regular season, 3 = postseason.
+export async function fetchWeekScoreboard(season, week, seasontype = 2) {
+  const calendar = await fetchSeasonCalendar(season);
+  const weekEntry = calendar[seasontype]?.find((e) => Number(e.value) === week);
+  if (!weekEntry) throw new Error(`No ESPN calendar entry for season ${season}, seasontype ${seasontype}, week ${week}.`);
+  const dates = `${toYyyymmdd(weekEntry.startDate)}-${toYyyymmdd(weekEntry.endDate)}`;
+
+  const json = await getJson(`${BASE}/scoreboard?dates=${dates}`);
+  const events = json.events ?? [];
+  const outOfRange = events.filter((e) => e.date < weekEntry.startDate || e.date > weekEntry.endDate);
+  if (events.length > 0 && outOfRange.length === events.length) {
+    throw new Error(`ESPN scoreboard for dates=${dates} (season ${season} week ${week}) returned ${events.length} events, none within the requested date range (e.g. got ${events[0].date}) — likely the same season-context drift bug, ignoring the dates filter too.`);
+  }
+  return events.map((event) => {
     const comp = event.competitions?.[0];
     const home = comp?.competitors?.find((c) => c.homeAway === 'home');
     const away = comp?.competitors?.find((c) => c.homeAway === 'away');
@@ -82,6 +116,36 @@ export async function fetchWeekScoreboard(season, week, seasontype = 2) {
       away: { abbr: canonicalAbbr(away?.team?.abbreviation), score: away?.score != null ? Number(away.score) : null },
     };
   });
+}
+
+// Per-team average point differential for a full completed season — built
+// from real final scores via fetchWeekScoreboard (now fixed, see above)
+// rather than fetchTeamSeasonStats, which has the identical season-drift
+// bug (confirmed live: season=2024 returned season.year 2026, same
+// "current context" leak) and — unlike the scoreboard endpoint — has no
+// known dates-based workaround. Point differential is all
+// ratingsStore.js's seedSeasonRatings actually needs from a prior season
+// (it reads priorSeasonPointDiffPerGame, or derives it from
+// pointsFor/Against — nothing else in the full stat profile), so this
+// sidesteps the broken endpoint entirely rather than needing to fix it.
+export async function fetchSeasonPointDiffs(season, { weeks = Array.from({ length: 18 }, (_, i) => i + 1) } = {}) {
+  const totals = {}; // abbr -> { diffSum, games }
+  for (const week of weeks) {
+    let games;
+    try {
+      games = await fetchWeekScoreboard(season, week);
+    } catch {
+      continue; // a missing/malformed calendar week (rare) shouldn't abort the whole season
+    }
+    for (const g of games.filter((g) => g.completed && g.home.score != null && g.away.score != null)) {
+      const diff = g.home.score - g.away.score;
+      (totals[g.home.abbr] ??= { diffSum: 0, games: 0 }).diffSum += diff;
+      totals[g.home.abbr].games += 1;
+      (totals[g.away.abbr] ??= { diffSum: 0, games: 0 }).diffSum -= diff;
+      totals[g.away.abbr].games += 1;
+    }
+  }
+  return Object.fromEntries(Object.entries(totals).map(([abbr, t]) => [abbr, { priorSeasonPointDiffPerGame: t.diffSum / t.games }]));
 }
 
 // Team season statistics (offense/defense splits). ESPN's team-statistics

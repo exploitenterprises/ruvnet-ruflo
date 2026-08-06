@@ -5,31 +5,21 @@
 // point-in-time) and what this does and doesn't validate.
 //
 // Seeding is real, not synthetic: ratings start from the PRIOR season's
-// final team stats (same seedSeasonRatings call the live pipeline uses in
-// weeklyUpdate.js) — this isn't lookahead, since a fully-completed prior
-// season is legitimately known before the season being backtested starts.
-// From there, ratings only ever update from games that have already been
-// played, and every prediction is recorded using the ratings as they stood
-// immediately BEFORE that week's results were applied.
+// real point differential (fetchSeasonPointDiffs, built from real final
+// scores — see statsProvider.js for why not fetchTeamSeasonStats, which has
+// the same season-drift bug fetchWeekScoreboard had to work around) — this
+// isn't lookahead, since a fully-completed prior season is legitimately
+// known before the season being backtested starts. From there, ratings only
+// ever update from games that have already been played, and every
+// prediction is recorded using the ratings as they stood immediately BEFORE
+// that week's results were applied.
 
-import { fetchWeekScoreboard, fetchTeamsIndex, fetchTeamSeasonStats } from './providers/statsProvider.js';
-import { mapEspnStatsToModel } from './weeklyUpdate.js';
+import { fetchWeekScoreboard, fetchSeasonPointDiffs } from './providers/statsProvider.js';
 import { seedSeasonRatings, applyResults } from './ratingsStore.js';
 import { matchupWinProbability, winProbToSpread } from './analysis/powerRatings.js';
 
 export async function backtestNflSeason(season, { weeks = Array.from({ length: 18 }, (_, i) => i + 1) } = {}) {
-  const teamsIndex = await fetchTeamsIndex();
-  const priorSeasonStats = {};
-  for (const t of teamsIndex) {
-    try {
-      const raw = await fetchTeamSeasonStats(season - 1, t.id);
-      priorSeasonStats[t.abbr] = mapEspnStatsToModel(t.abbr, raw);
-    } catch {
-      // A team without a fetchable prior season (rare — relocation,
-      // expansion) just seeds at league average via seedSeasonRatings'
-      // own fallback, rather than aborting the whole backtest.
-    }
-  }
+  const priorSeasonStats = await fetchSeasonPointDiffs(season - 1);
   let ratings = seedSeasonRatings(priorSeasonStats);
 
   const predictions = [];

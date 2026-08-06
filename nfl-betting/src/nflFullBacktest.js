@@ -29,8 +29,7 @@
 // to redo on every run, cheap to keep once fetched (a completed game's
 // boxscore never changes).
 
-import { fetchWeekScoreboard, fetchTeamsIndex, fetchTeamSeasonStats, fetchGameBoxscore } from './providers/statsProvider.js';
-import { mapEspnStatsToModel } from './weeklyUpdate.js';
+import { fetchWeekScoreboard, fetchTeamsIndex, fetchSeasonPointDiffs, fetchGameBoxscore } from './providers/statsProvider.js';
 import { seedSeasonRatings, applyResults } from './ratingsStore.js';
 import { projectGame } from './analysis/matchupEngine.js';
 import { computeLeagueAverages } from './analysis/leagueAverages.js';
@@ -59,16 +58,9 @@ async function saveBoxscoreCache(season, cache) {
 export async function backtestNflFullModel(season, { weeks = Array.from({ length: 18 }, (_, i) => i + 1), onWeekDone } = {}) {
   const teamsIndex = await fetchTeamsIndex();
 
-  const priorSeasonStats = {};
-  for (const t of teamsIndex) {
-    try {
-      const raw = await fetchTeamSeasonStats(season - 1, t.id);
-      priorSeasonStats[t.abbr] = mapEspnStatsToModel(t.abbr, raw);
-    } catch {
-      // No fetchable prior season (relocation/expansion) — seedSeasonRatings' own
-      // fallback covers Elo; pointInTimeStats' fallbackProfile covers week-1 stats.
-    }
-  }
+  // See statsProvider.js's fetchSeasonPointDiffs for why not fetchTeamSeasonStats
+  // (same season-drift bug fetchWeekScoreboard had to work around).
+  const priorSeasonStats = await fetchSeasonPointDiffs(season - 1);
   let ratings = seedSeasonRatings(priorSeasonStats);
 
   let pbpRows = [];
