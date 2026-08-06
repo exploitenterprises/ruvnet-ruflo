@@ -17,17 +17,25 @@
 // "real data or nothing" posture as pointInTimeStats.js's fallbackProfile,
 // just applied at the week level here since CFBD gives us all teams'
 // point-in-time stats in one call (no team-by-team fallback needed).
+//
+// Fetching (buildCfbBacktestGames) is split from scoring (backtestCfbFullModel)
+// so tuneBlendWeights.js can grid-search margin/win-prob blend weights by
+// re-running projectGame's cheap pure computation against already-fetched
+// games, instead of re-fetching a whole season per candidate weight combo.
 
 import { projectGame } from './analysis/matchupEngine.js';
 import { computeLeagueAverages } from './analysis/leagueAverages.js';
 import { CONSTANTS as ELO_CONSTANTS } from './analysis/powerRatings.js';
 import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel, mapCfbdAdvancedToEpaSplits } from './analysis/cfbStats.js';
 
-export async function backtestCfbFullModel(season, { weeks = Array.from({ length: 15 }, (_, i) => i + 2) } = {}) {
+// Fetches and reconstructs everything a full season's worth of projectGame
+// calls need — real, point-in-time inputs plus the real outcome — without
+// calling projectGame itself.
+export async function buildCfbBacktestGames(season, { weeks = Array.from({ length: 15 }, (_, i) => i + 2) } = {}) {
   const cfbdProvider = await import('./providers/cfbdProvider.js');
   const allGames = await cfbdProvider.fetchGames(season);
 
-  const predictions = [];
+  const games = [];
   for (const week of weeks) {
     const slate = allGames.filter((g) => g.week === week && g.completed && g.homePoints != null && g.awayPoints != null);
     if (slate.length === 0) continue;
@@ -56,7 +64,8 @@ export async function backtestCfbFullModel(season, { weeks = Array.from({ length
       if (!homeStats || !awayStats || homeStats.gamesPlayed === 0 || awayStats.gamesPlayed === 0) continue;
       if (g.homePregameElo == null || g.awayPregameElo == null) continue;
 
-      const proj = projectGame({
+      games.push({
+        season, week, homeTeam: g.homeTeam, awayTeam: g.awayTeam,
         home: { abbr: g.homeTeam, stats: homeStats, rating: g.homePregameElo },
         away: { abbr: g.awayTeam, stats: awayStats, rating: g.awayPregameElo },
         leagueAvg,
@@ -64,15 +73,32 @@ export async function backtestCfbFullModel(season, { weeks = Array.from({ length
         neutralSite: g.neutralSite,
         eloPointsPerMargin: ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN,
         epaSplits: { home: epaSplitsByTeam[g.homeTeam], away: epaSplitsByTeam[g.awayTeam] },
-      });
-
-      predictions.push({
-        season, week, homeTeam: g.homeTeam, awayTeam: g.awayTeam,
-        homeWinProb: proj.homeWinProb, homeWon: g.homePoints > g.awayPoints,
-        projectedSpread: proj.projectedSpread, actualMargin: g.homePoints - g.awayPoints,
-        projectedTotal: proj.projectedTotal, actualTotal: g.homePoints + g.awayPoints,
+        homeWon: g.homePoints > g.awayPoints,
+        actualMargin: g.homePoints - g.awayPoints,
+        actualTotal: g.homePoints + g.awayPoints,
       });
     }
   }
-  return predictions;
+  return games;
+}
+
+// Scores a season with projectGame — the actual backtest. `projectGameOpts`
+// (e.g. { marginBlendWeights, winProbBlendWeights }) is forwarded to every
+// projectGame call, letting tuneBlendWeights.js score alternate weight
+// combos against the same fetched games without re-fetching.
+export function scoreCfbBacktestGames(games, projectGameOpts = {}) {
+  return games.map((g) => {
+    const proj = projectGame({ ...g, ...projectGameOpts });
+    return {
+      season: g.season, week: g.week, homeTeam: g.homeTeam, awayTeam: g.awayTeam,
+      homeWinProb: proj.homeWinProb, homeWon: g.homeWon,
+      projectedSpread: proj.projectedSpread, actualMargin: g.actualMargin,
+      projectedTotal: proj.projectedTotal, actualTotal: g.actualTotal,
+    };
+  });
+}
+
+export async function backtestCfbFullModel(season, { weeks = Array.from({ length: 15 }, (_, i) => i + 2), projectGameOpts } = {}) {
+  const games = await buildCfbBacktestGames(season, { weeks });
+  return scoreCfbBacktestGames(games, projectGameOpts);
 }

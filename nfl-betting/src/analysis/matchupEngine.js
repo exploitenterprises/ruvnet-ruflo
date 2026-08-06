@@ -10,6 +10,28 @@ import { findStarterInjury, starterInjuryNotes, QB_OUT_POINT_PENALTY } from './i
 // implicitly assumes via its playsPerGame league-average usage).
 const AVG_PLAYS_PER_GAME = 64;
 
+// The two ensembles that combine independently-derived signals into a
+// single projection — set by feel when each signal was added (Elo/eff
+// first, EPA folded in later), never tuned against data until
+// tuneBlendWeights.js could score real backtest results against them (see
+// that file / reports/backtest-weight-tuning-*.md for the search and the
+// before/after: the full-model backtest found spread MAE was worse than
+// Elo alone in all 4 league-seasons tested with these original weights).
+//
+// MARGIN_BLEND_WEIGHTS: how much the projected point margin trusts the
+// efficiency-model estimate (`eff`) vs. Elo (`elo`) vs. EPA/play (`epa`)
+// when EPA data is available. When it isn't, `eff`/`elo` are renormalized
+// to sum to 1 (dropping `epa`'s share) rather than using a separate
+// hardcoded fallback — e.g. eff:0.35/elo:0.35 renormalizes to 0.5/0.5,
+// which is what the original code hardcoded for the no-EPA case, so this
+// is a strictly more general version of the same behavior, not a change
+// to it.
+export const MARGIN_BLEND_WEIGHTS = { eff: 0.35, elo: 0.35, epa: 0.30 };
+// WIN_PROB_BLEND_WEIGHTS: how much the final win probability trusts Elo's
+// own win-probability estimate vs. the score-based estimate derived from
+// the (already-blended) projected margin.
+export const WIN_PROB_BLEND_WEIGHTS = { elo: 0.55, score: 0.45 };
+
 // Ratio-based unit projection: expected points a unit produces/allows relative
 // to league average, in the style of a simplified opponent-adjusted efficiency
 // model (same family as Football Outsiders DVOA / Pro Football Reference SRS).
@@ -47,6 +69,8 @@ export function projectGame({
   // scaling for winProbToSpread — defaults to the NFL constant. CFB callers (cfbEdgeBoard.js)
   // pass ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN: CFBD's Elo uses a much wider scale (real
   // blowout margins are far larger in CFB), confirmed by backtest — see powerRatings.js.
+  marginBlendWeights = MARGIN_BLEND_WEIGHTS, // { eff, elo, epa } — see the constant above
+  winProbBlendWeights = WIN_PROB_BLEND_WEIGHTS, // { elo, score } — see the constant above
 }) {
   const eloWinProb = matchupWinProbability({ homeRating: home.rating, awayRating: away.rating, neutralSite });
   const eloSpread = winProbToSpread(eloWinProb, eloPointsPerMargin); // home margin implied by Elo
@@ -71,8 +95,12 @@ export function projectGame({
   const epaEdgePerPlay = epaMatchupEdgePerPlay(epaSplits.home, epaSplits.away);
   const epaImpliedSpread = epaEdgePerPlay != null ? epaEdgePerPlay * AVG_PLAYS_PER_GAME : null;
   const blendedMargin = epaImpliedSpread != null
-    ? effMargin * 0.35 + eloSpread * 0.35 + epaImpliedSpread * 0.30
-    : effMargin * 0.5 + eloSpread * 0.5;
+    ? effMargin * marginBlendWeights.eff + eloSpread * marginBlendWeights.elo + epaImpliedSpread * marginBlendWeights.epa
+    // No EPA data: renormalize eff/elo to sum to 1 rather than a separate
+    // hardcoded fallback (with the original 0.35/0.35/0.30 weights this
+    // renormalizes to exactly 0.5/0.5, so it's a strict generalization).
+    : effMargin * (marginBlendWeights.eff / (marginBlendWeights.eff + marginBlendWeights.elo))
+      + eloSpread * (marginBlendWeights.elo / (marginBlendWeights.eff + marginBlendWeights.elo));
   const shift = (blendedMargin - effMargin) / 2;
   homePointsEst += shift;
   awayPointsEst -= shift;
@@ -126,7 +154,7 @@ export function projectGame({
   // matchup-specific efficiency signal, converted via the same logistic used
   // for Elo so the two are on a comparable scale.
   const scoreBasedWinProb = 1 / (1 + Math.exp(-projectedSpread / 7)); // ~7 pts ~ 1 std dev of NFL margins
-  const homeWinProb = clamp(eloWinProb * 0.55 + scoreBasedWinProb * 0.45, 0.02, 0.98);
+  const homeWinProb = clamp(eloWinProb * winProbBlendWeights.elo + scoreBasedWinProb * winProbBlendWeights.score, 0.02, 0.98);
 
   return {
     home: home.abbr,

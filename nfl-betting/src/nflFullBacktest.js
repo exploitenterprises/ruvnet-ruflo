@@ -28,6 +28,12 @@
 // gitignored) since a full season is ~272 individual API calls — expensive
 // to redo on every run, cheap to keep once fetched (a completed game's
 // boxscore never changes).
+//
+// Fetching (buildNflBacktestGames) is split from scoring (backtestNflFullModel)
+// so tuneBlendWeights.js can grid-search margin/win-prob blend weights by
+// re-running projectGame's cheap pure computation against already-fetched
+// games, instead of re-fetching a whole season's box scores per candidate
+// weight combo.
 
 import { fetchWeekScoreboard, fetchTeamsIndex, fetchSeasonPointDiffs, fetchGameBoxscore } from './providers/statsProvider.js';
 import { seedSeasonRatings, applyResults } from './ratingsStore.js';
@@ -55,7 +61,11 @@ async function saveBoxscoreCache(season, cache) {
   await writeFile(path.join(CACHE_DIR, `nfl-boxscores-${season}.json`), JSON.stringify(cache));
 }
 
-export async function backtestNflFullModel(season, { weeks = Array.from({ length: 18 }, (_, i) => i + 1), onWeekDone } = {}) {
+// Fetches and reconstructs everything a full season's worth of projectGame
+// calls need — real, point-in-time inputs plus the real outcome — without
+// calling projectGame itself. Returns [{ home, away, leagueAvg, weather,
+// neutralSite, epaSplits, week, actualMargin, actualTotal, homeWon }].
+export async function buildNflBacktestGames(season, { weeks = Array.from({ length: 18 }, (_, i) => i + 1), onWeekDone } = {}) {
   const teamsIndex = await fetchTeamsIndex();
 
   // See statsProvider.js's fetchSeasonPointDiffs for why not fetchTeamSeasonStats
@@ -73,7 +83,7 @@ export async function backtestNflFullModel(season, { weeks = Array.from({ length
 
   const boxscoreCache = await loadBoxscoreCache(season);
   const gameRecords = []; // accumulates as weeks complete — the point-in-time stat source
-  const predictions = [];
+  const games = [];
 
   for (const week of weeks) {
     const slate = await fetchWeekScoreboard(season, week);
@@ -93,20 +103,17 @@ export async function backtestNflFullModel(season, { weeks = Array.from({ length
       const awayRating = ratings[g.away.abbr];
       if (homeRating == null || awayRating == null) continue;
 
-      const proj = projectGame({
+      games.push({
+        season, week, homeTeam: g.home.abbr, awayTeam: g.away.abbr,
         home: { abbr: g.home.abbr, stats: seasonStatsByTeam[g.home.abbr], rating: homeRating },
         away: { abbr: g.away.abbr, stats: seasonStatsByTeam[g.away.abbr], rating: awayRating },
         leagueAvg,
         weather: { isDome: true }, // see file header — no honest historical-weather source
         neutralSite: g.neutralSite,
         epaSplits: { home: epaSplitsByTeam[g.home.abbr], away: epaSplitsByTeam[g.away.abbr] },
-      });
-
-      predictions.push({
-        season, week, homeTeam: g.home.abbr, awayTeam: g.away.abbr,
-        homeWinProb: proj.homeWinProb, homeWon: g.home.score > g.away.score,
-        projectedSpread: proj.projectedSpread, actualMargin: g.home.score - g.away.score,
-        projectedTotal: proj.projectedTotal, actualTotal: g.home.score + g.away.score,
+        homeWon: g.home.score > g.away.score,
+        actualMargin: g.home.score - g.away.score,
+        actualTotal: g.home.score + g.away.score,
       });
     }
 
@@ -131,5 +138,26 @@ export async function backtestNflFullModel(season, { weeks = Array.from({ length
     onWeekDone?.(week, completed.length);
   }
 
-  return predictions;
+  return games;
+}
+
+// Scores a season with projectGame — the actual backtest. `projectGameOpts`
+// (e.g. { marginBlendWeights, winProbBlendWeights }) is forwarded to every
+// projectGame call, letting tuneBlendWeights.js score alternate weight
+// combos against the same fetched games without re-fetching.
+export function scoreNflBacktestGames(games, projectGameOpts = {}) {
+  return games.map((g) => {
+    const proj = projectGame({ ...g, ...projectGameOpts });
+    return {
+      season: g.season, week: g.week, homeTeam: g.homeTeam, awayTeam: g.awayTeam,
+      homeWinProb: proj.homeWinProb, homeWon: g.homeWon,
+      projectedSpread: proj.projectedSpread, actualMargin: g.actualMargin,
+      projectedTotal: proj.projectedTotal, actualTotal: g.actualTotal,
+    };
+  });
+}
+
+export async function backtestNflFullModel(season, { weeks = Array.from({ length: 18 }, (_, i) => i + 1), onWeekDone, projectGameOpts } = {}) {
+  const games = await buildNflBacktestGames(season, { weeks, onWeekDone });
+  return scoreNflBacktestGames(games, projectGameOpts);
 }
