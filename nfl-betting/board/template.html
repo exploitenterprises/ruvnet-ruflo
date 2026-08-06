@@ -160,20 +160,6 @@
   .brand .name { font-family: 'Erica One', system-ui, sans-serif; text-transform: uppercase; font-size: 24px; letter-spacing: 0.01em; line-height: 1; }
   .brand .name em { font-style: normal; color: var(--accent); }
 
-  .live-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: 'Red Hat Mono', monospace; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16);
-    padding: 5px 10px 5px 8px; border-radius: 999px; color: #dfe3ee;
-  }
-  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); animation: pulse 1.8s ease-out infinite; }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
-    70% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); }
-    100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
-  }
-  @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
-
   .hero h1 { font-size: 40px; margin: 20px 0 6px; position: relative; z-index: 1; }
   .hero .sub { font-family: 'Outfit'; font-size: 17.5px; color: #c3c9dc; max-width: 46ch; margin: 0; position: relative; z-index: 1; }
 
@@ -275,24 +261,9 @@
   .sb-card .pick-badge { position: absolute; top: 10px; right: 10px; font-family: 'Red Hat Mono'; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--accent); color: #fff; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
   .cfb-theme .sb-card .pick-badge { background: var(--accent-cfb); }
 
-  /* ---------- Methodology / footer ---------- */
-  .info-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 4px; }
-  .info-card h3 { font-size: 18px; margin: 0 0 8px; }
-  .info-card p, .info-card li { font-size: 16px; color: var(--text-dim); line-height: 1.6; }
-  .info-card ul { margin: 6px 0; padding-left: 18px; }
-  .cadence-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-  .cadence-day { flex: 1 1 calc(25% - 6px); min-width: 64px; text-align: center; padding: 8px 4px; border-radius: 7px; background: var(--surface-2); border: 1px solid var(--line); }
-  .cadence-day.active { background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-  .cadence-day .d { font-family: 'Red Hat Mono'; font-size: 12.5px; letter-spacing: 0.06em; color: var(--text-dim); text-transform: uppercase; }
-  .cadence-day .t { font-family: 'Red Hat Mono'; font-size: 15px; font-weight: 700; margin-top: 2px; }
-  .cadence-day.active .t { color: var(--accent); }
-
-  .disclaimer { font-size: 14.5px; color: var(--text-dim); border-top: 1px solid var(--line); margin-top: 18px; padding-top: 12px; line-height: 1.6; }
-  .sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .sources a { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; text-decoration: none; }
-  .sources a:hover { color: var(--accent-2); border-color: var(--accent-2); }
-
+  /* ---------- Footer ---------- */
   footer.appfoot { text-align: center; padding: 22px 22px 0; color: var(--text-dim); font-family: 'Red Hat Mono'; font-size: 14px; letter-spacing: 0.04em; }
+  footer.appfoot .foot-disclaimer { display: block; font-size: 12px; opacity: 0.7; margin-top: 4px; letter-spacing: 0.01em; }
 
   /* ---------- Transaction wire ---------- */
   .wire { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
@@ -448,7 +419,6 @@
   .cfb-theme .eyebrow { color: var(--accent-cfb-2); }
   .cfb-theme .value-card .stripe { background: linear-gradient(180deg, var(--accent-cfb), var(--accent-cfb-2)); }
   .cfb-theme .sb-card .odds, .cfb-theme .meta-chip b { color: var(--accent-cfb); }
-  .cfb-theme .cadence-day.active { background: color-mix(in srgb, var(--accent-cfb) 14%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent-cfb) 45%, var(--line)); }
   .cfb-theme .spread-block { background: color-mix(in srgb, var(--accent-cfb) 10%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent-cfb) 30%, var(--line)); }
   .cfb-theme .spread-block .call { color: var(--accent-cfb); }
 
@@ -640,7 +610,6 @@
         <svg class="mark" viewBox="0 0 200 220" role="img" aria-label="Red Hot Locks logo: a chili pepper dancing"><use href="#chili-mascot"></use></svg>
         <span class="name">Red <em>Hot</em> Locks</span>
       </div>
-      <span class="live-chip"><span class="live-dot"></span>Market Read</span>
     </div>
 
     <div class="hero-mascot-wrap">
@@ -748,28 +717,8 @@
   <section style="padding-top: 8px;">
     <div class="section-head">
       <div>
-        <p class="eyebrow">📰 Latest Wire</p>
+        <p class="eyebrow">📰 Transaction Wire — NFL</p>
         <h2>What Moved</h2>
-      </div>
-    </div>
-    <div class="wire">
-      <div class="wire-item"><span class="wire-tag trade">Trade</span><p><b>WR Jaylen Waddle</b> MIA → DEN for a 1st, a 3rd, and a 4th-round swap — the centerpiece move behind Denver's Super Bowl sleeper case.</p></div>
-      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>Sean McDermott</b> out in Buffalo after nine seasons — Bills promote OC <b>Joe Brady</b> to head coach.</p></div>
-      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>QB Sam Leavitt</b> Arizona State → LSU — portal's top-rated player, went 16-4 as a starter and led ASU to a Big 12 title and CFP berth.</p></div>
-    </div>
-    <p style="font-size: 15.5px; color:var(--text-dim); margin-top:10px;">Full wire in NFL Futures and CFB Futures.</p>
-  </section>
-
-  </div>
-
-  <div class="panel panel-nfl-futures">
-
-  <section>
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">Transaction Wire</p>
-        <h2>What Moved</h2>
-        <p>The offseason that reshuffled the league — 10 head-coaching changes ties the most ever in a single cycle.</p>
       </div>
     </div>
     <div class="wire">
@@ -784,6 +733,29 @@
       <div class="wire-item"><span class="wire-tag hired">Hired</span><p>Cleveland tabs <b>Todd Monken</b>, Pittsburgh hires <b>Mike McCarthy</b>, Tennessee lands <b>Robert Saleh</b> as HC (the same hire behind our Titans division-value pick), Atlanta gets <b>Kevin Stefanski</b>, Miami hires <b>Jeff Hafley</b>.</p></div>
     </div>
   </section>
+
+  <section style="padding-top: 8px;" class="cfb-theme">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">📰 Coaching &amp; Portal Wire — CFB</p>
+        <h2>What Moved</h2>
+      </div>
+    </div>
+    <div class="wire">
+      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>QB Sam Leavitt</b> Arizona State → LSU — portal's top-rated player, went 16-4 as a starter and led ASU to a Big 12 title and CFP berth.</p></div>
+      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>QB Brendan Sorsby</b> Cincinnati → Texas Tech — the most sought-after prospect in the portal this cycle.</p></div>
+      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>WR Cam Coleman</b> Auburn → Texas; <b>OT Jordan Seaton</b> Colorado → LSU — a former 5-star and the No. 1 tackle in his class.</p></div>
+      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>James Franklin</b> out at Penn State mid-season after 12 years ($49M buyout) — Nittany Lions hire <b>Matt Campbell</b> from Iowa State.</p></div>
+      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>Billy Napier</b> out at Florida — Gators hire <b>Jon Sumrall</b> from Tulane.</p></div>
+      <div class="wire-item"><span class="wire-tag hired">Hired</span><p><b>Lane Kiffin</b> leaves Ole Miss for <b>LSU</b> — one of the cycle's biggest domino moves.</p></div>
+      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>UCLA</b> and <b>Virginia Tech</b> both fired their head coach after 0-3 starts — in-season firings, not just offseason.</p></div>
+      <div class="wire-item"><span class="wire-tag hired">Hired</span><p>63 new offensive/defensive coordinators across the Power Four this cycle — 17 programs replaced <em>both</em> coordinators, a full scheme reset.</p></div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="panel panel-nfl-futures">
 
   <section>
     <div class="section-head">
@@ -1083,26 +1055,6 @@
   <section>
     <div class="section-head">
       <div>
-        <p class="eyebrow">Coaching &amp; Portal Wire</p>
-        <h2>What Moved</h2>
-        <p>The transfer portal is college football's free agency; the coaching carousel this cycle touched 17 Power Four jobs — six in the SEC alone.</p>
-      </div>
-    </div>
-    <div class="wire">
-      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>QB Sam Leavitt</b> Arizona State → LSU — portal's top-rated player, went 16-4 as a starter and led ASU to a Big 12 title and CFP berth.</p></div>
-      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>QB Brendan Sorsby</b> Cincinnati → Texas Tech — the most sought-after prospect in the portal this cycle.</p></div>
-      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>WR Cam Coleman</b> Auburn → Texas; <b>OT Jordan Seaton</b> Colorado → LSU — a former 5-star and the No. 1 tackle in his class.</p></div>
-      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>James Franklin</b> out at Penn State mid-season after 12 years ($49M buyout) — Nittany Lions hire <b>Matt Campbell</b> from Iowa State.</p></div>
-      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>Billy Napier</b> out at Florida — Gators hire <b>Jon Sumrall</b> from Tulane.</p></div>
-      <div class="wire-item"><span class="wire-tag hired">Hired</span><p><b>Lane Kiffin</b> leaves Ole Miss for <b>LSU</b> — one of the cycle's biggest domino moves.</p></div>
-      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>UCLA</b> and <b>Virginia Tech</b> both fired their head coach after 0-3 starts — in-season firings, not just offseason.</p></div>
-      <div class="wire-item"><span class="wire-tag hired">Hired</span><p>63 new offensive/defensive coordinators across the Power Four this cycle — 17 programs replaced <em>both</em> coordinators, a full scheme reset.</p></div>
-    </div>
-  </section>
-
-  <section>
-    <div class="section-head">
-      <div>
         <p class="eyebrow">CFP National Championship</p>
         <h2>Our Pick</h2>
         <p>Seven schools sit at +1100 or shorter — the most wide-open title race the market's priced in years, and we've got a lean.</p>
@@ -1239,47 +1191,7 @@
 
   </div>
 
-  <section>
-    <div class="info-card">
-      <h3>How This Works</h3>
-      <p>Spread is the headline call on every game; totals and moneylines only get posted when there's a real edge. One pick per market — no odds-shopping lists. Preseason: a market-research read cross-checked against real sportsbook lines. Once games are underway, in-house power ratings and matchup models take over.</p>
-      <div class="cadence-strip">
-        <div class="cadence-day active"><div class="d">Tue</div><div class="t">Full board</div></div>
-        <div class="cadence-day"><div class="d">Wed</div><div class="t">—</div></div>
-        <div class="cadence-day active"><div class="d">Thu</div><div class="t">Line moves</div></div>
-        <div class="cadence-day"><div class="d">Fri</div><div class="t">—</div></div>
-        <div class="cadence-day active"><div class="d">Sat</div><div class="t">Line moves</div></div>
-        <div class="cadence-day"><div class="d">Sun</div><div class="t">—</div></div>
-        <div class="cadence-day"><div class="d">Mon</div><div class="t">—</div></div>
-      </div>
-      <div class="disclaimer">
-        Research/decision-support only, not financial advice. Odds move constantly — confirm current prices at your book before betting. Bet within your means; never stake more than you can afford to lose.
-      </div>
-      <div class="sources">
-        <a href="https://www.cbssports.com/nfl/news/2026-nfl-futures-odds-only-one-division-winner-is-favored-to-repeat-plus-intriguing-sleepers-to-consider/" target="_blank" rel="noopener">CBS Sports</a>
-        <a href="https://www.rotowire.com/betting/nfl/futures.php" target="_blank" rel="noopener">RotoWire</a>
-        <a href="https://www.sharpfootballanalysis.com/betting/super-bowl-61-odds-predictions-best-bets-nfl/" target="_blank" rel="noopener">Sharp Football</a>
-        <a href="https://www.sportsline.com/insiders/how-to-bet-nfl-division-winners-in-2026-ranking-my-eight-best-bets-and-each-division-by-best-value/" target="_blank" rel="noopener">SportsLine</a>
-        <a href="https://www.vegasinsider.com/nfl/odds/futures/" target="_blank" rel="noopener">VegasInsider</a>
-        <a href="https://www.si.com/betting/2026-nfl-division-odds-for-every-team-ahead-of-training-camp-bills-and-ravens-are-only-odds-on-favorites-01ky0m75cyrz" target="_blank" rel="noopener">SI</a>
-        <a href="https://www.oddsshopper.com/articles/prediction-markets/hof-game-2026-model-verdict" target="_blank" rel="noopener">OddsShopper</a>
-        <a href="https://dknetwork.draftkings.com/2026/08/02/opening-odds-for-cardinals-vs-panthers-2026-nfl-hall-of-fame-game/" target="_blank" rel="noopener">DraftKings Network</a>
-        <a href="https://www.espn.com/nfl/story/_/id/47899175/2026-nfl-free-agency-tracker-live-updates-signings-trades-cuts-contracts-rumors" target="_blank" rel="noopener">ESPN FA Tracker</a>
-        <a href="https://www.nbcnewyork.com/news/sports/nfl/tracking-new-nfl-head-coach-front-office-hires-2026-offseason/6444381/" target="_blank" rel="noopener">Coaching Tracker</a>
-        <a href="https://www.cbssports.com/college-football/news/college-football-national-championship-odds-2026/" target="_blank" rel="noopener">CBS CFB Odds</a>
-        <a href="https://www.sportsbettingdime.com/college-football/futures/conference-title-odds/" target="_blank" rel="noopener">Conf. Title Tracker</a>
-        <a href="https://saturdayblitz.com/2025-26-college-football-coaching-carousel-every-firing-hire-and-rumor-so-far" target="_blank" rel="noopener">CFB Coaching Carousel</a>
-        <a href="https://www.espn.com/college-football/story/_/id/47506851/2026-ncaa-football-transfer-portal-best-quarterbacks" target="_blank" rel="noopener">ESPN Transfer Portal</a>
-        <a href="https://www.nbc.com/nbc-insider/when-does-the-2026-college-football-season-start" target="_blank" rel="noopener">CFB Schedule</a>
-        <a href="https://sports.betmgm.com/en/blog/nfl/mvp-race-predictions-current-favorites-bm16/" target="_blank" rel="noopener">MVP Odds</a>
-        <a href="https://www.vegasinsider.com/nfl/odds/rookie-of-the-year/" target="_blank" rel="noopener">Rookie of the Year Odds</a>
-        <a href="https://www.rotowire.com/betting/nfl/pass-yards-odds.php" target="_blank" rel="noopener">Passing Yards Odds</a>
-        <a href="https://www.sportsbettingdime.com/college-football/futures/conference-title-odds/" target="_blank" rel="noopener">G5 Conference Odds</a>
-      </div>
-    </div>
-  </section>
-
-  <footer class="appfoot">🌶️ RED HOT LOCKS · powered by nfl-betting engine</footer>
+  <footer class="appfoot">🌶️ RED HOT LOCKS · powered by nfl-betting engine<span class="foot-disclaimer">Research only, not financial advice. Bet within your means.</span></footer>
 
 </div>
 
