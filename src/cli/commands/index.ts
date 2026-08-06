@@ -9,6 +9,10 @@ import { Logger } from "../../core/logger.ts";
 import { JsonPersistenceManager } from "../../core/json-persistence.ts";
 import { swarmAction } from "./swarm.ts";
 import { SimpleMemoryManager } from "./memory.ts";
+import { getStrategy } from "../../trading/strategies.ts";
+import { DEFAULT_BACKTEST_OPTIONS, runBacktest } from "../../trading/backtester.ts";
+import { fetchAlphaVantageDailyBars, loadBarsFromCsvFile } from "../../trading/data.ts";
+import type { BacktestOptions, Bar, StrategyParams } from "../../trading/types.ts";
 
 let orchestrator: Orchestrator | null = null;
 let configManager: ConfigManager | null = null;
@@ -1510,6 +1514,128 @@ Now, please proceed with the task: ${task}`;
       } else {
         // Show general help
         cli.showHelp();
+      }
+    },
+  });
+
+  // Backtest command
+  cli.command({
+    name: "backtest",
+    description: "Paper-trade a strategy against historical price data (simulation only, no real orders)",
+    options: [
+      {
+        name: "symbol",
+        short: "s",
+        description: "Ticker symbol to backtest (fetched from Alpha Vantage unless --data-file is set)",
+        type: "string",
+      },
+      {
+        name: "data-file",
+        description: "Path to a local CSV file (date,open,high,low,close,volume) instead of fetching live data",
+        type: "string",
+      },
+      {
+        name: "strategy",
+        description: "Strategy to run: sma-crossover or rsi-mean-reversion",
+        type: "string",
+        default: "sma-crossover",
+      },
+      {
+        name: "capital",
+        description: "Starting paper capital",
+        type: "number",
+        default: 10000,
+      },
+      {
+        name: "position-size",
+        description: "Fraction of equity risked per trade (0-1)",
+        type: "number",
+        default: 1,
+      },
+      {
+        name: "fee-rate",
+        description: "Round-trip commission + slippage as a fraction of trade value",
+        type: "number",
+        default: 0.001,
+      },
+      {
+        name: "fast-period",
+        description: "Fast SMA period (sma-crossover only)",
+        type: "number",
+      },
+      {
+        name: "slow-period",
+        description: "Slow SMA period (sma-crossover only)",
+        type: "number",
+      },
+      {
+        name: "rsi-period",
+        description: "RSI lookback period (rsi-mean-reversion only)",
+        type: "number",
+      },
+      {
+        name: "oversold",
+        description: "RSI oversold threshold (rsi-mean-reversion only)",
+        type: "number",
+      },
+      {
+        name: "overbought",
+        description: "RSI overbought threshold (rsi-mean-reversion only)",
+        type: "number",
+      },
+    ],
+    action: async (ctx: CommandContext) => {
+      const symbol = (ctx.flags.symbol as string) || (ctx.flags.s as string);
+      const dataFile = ctx.flags["data-file"] as string | undefined;
+
+      if (!symbol && !dataFile) {
+        error("Provide --symbol <TICKER> (uses Alpha Vantage) or --data-file <path.csv>");
+        return;
+      }
+
+      try {
+        const strategy = getStrategy((ctx.flags.strategy as string) || "sma-crossover");
+
+        const params: StrategyParams = { ...strategy.defaultParams };
+        if (ctx.flags["fast-period"] !== undefined) params.fastPeriod = ctx.flags["fast-period"] as number;
+        if (ctx.flags["slow-period"] !== undefined) params.slowPeriod = ctx.flags["slow-period"] as number;
+        if (ctx.flags["rsi-period"] !== undefined) params.period = ctx.flags["rsi-period"] as number;
+        if (ctx.flags.oversold !== undefined) params.oversold = ctx.flags.oversold as number;
+        if (ctx.flags.overbought !== undefined) params.overbought = ctx.flags.overbought as number;
+
+        const options: BacktestOptions = {
+          initialCapital: (ctx.flags.capital as number) ?? DEFAULT_BACKTEST_OPTIONS.initialCapital,
+          positionSize: (ctx.flags["position-size"] as number) ?? DEFAULT_BACKTEST_OPTIONS.positionSize,
+          feeRate: (ctx.flags["fee-rate"] as number) ?? DEFAULT_BACKTEST_OPTIONS.feeRate,
+        };
+
+        info(dataFile ? `Loading bars from ${dataFile}...` : `Fetching daily bars for ${symbol} from Alpha Vantage...`);
+        const bars: Bar[] = dataFile
+          ? await loadBarsFromCsvFile(dataFile)
+          : await fetchAlphaVantageDailyBars(symbol!);
+
+        const result = runBacktest(bars, strategy, params, options);
+        result.symbol = symbol || dataFile!;
+
+        console.log();
+        console.log(bold(blue(`Backtest: ${result.symbol} - ${result.strategyName}`)));
+        console.log(`Params: ${JSON.stringify(result.params)}`);
+        console.log(`Period: ${bars[0].date} to ${bars[bars.length - 1].date} (${bars.length} bars)`);
+        console.log();
+        console.log(bold("Results (simulated paper trading, not real money):"));
+        console.log(`  Starting capital:   $${result.metrics.startingCapital.toFixed(2)}`);
+        console.log(`  Ending capital:     $${result.metrics.endingCapital.toFixed(2)}`);
+        console.log(`  Total return:       ${result.metrics.totalReturnPct.toFixed(2)}%`);
+        console.log(`  CAGR:               ${result.metrics.cagrPct.toFixed(2)}%`);
+        console.log(`  Max drawdown:       ${result.metrics.maxDrawdownPct.toFixed(2)}%`);
+        console.log(`  Sharpe ratio:       ${result.metrics.sharpeRatio.toFixed(2)}`);
+        console.log(`  Trades:             ${result.metrics.tradeCount}`);
+        console.log(`  Win rate:           ${result.metrics.winRatePct.toFixed(2)}%`);
+        console.log(`  Avg trade return:   ${result.metrics.avgTradeReturnPct.toFixed(2)}%`);
+        console.log();
+        warning("This is a historical simulation for research purposes only - it is not financial advice and does not place real trades.");
+      } catch (err) {
+        error(`Backtest failed: ${(err as Error).message}`);
       }
     },
   });

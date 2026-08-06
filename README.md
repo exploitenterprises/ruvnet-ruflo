@@ -423,6 +423,26 @@ npx claude-flow claude <subcommand>
 - Coverage and commit strategy awareness
 - Example commands ready to use with the Bash tool
 
+#### `backtest` - Paper-Trade a Strategy Against Historical Data 🆕
+```bash
+npx claude-flow backtest [options]
+  -s, --symbol <ticker>      Symbol to fetch from Alpha Vantage (needs ALPHAVANTAGE_API_KEY)
+  --data-file <path>         Use a local CSV instead (date,open,high,low,close,volume)
+  --strategy <name>          sma-crossover (default) or rsi-mean-reversion
+  --capital <n>              Starting paper capital (default: 10000)
+  --position-size <0-1>      Fraction of equity risked per trade (default: 1)
+  --fee-rate <n>             Round-trip commission + slippage fraction (default: 0.001)
+  --fast-period <n>          Fast SMA period (sma-crossover)
+  --slow-period <n>          Slow SMA period (sma-crossover)
+  --rsi-period <n>           RSI lookback (rsi-mean-reversion)
+  --oversold <n>             RSI oversold threshold (rsi-mean-reversion)
+  --overbought <n>           RSI overbought threshold (rsi-mean-reversion)
+```
+Simulates a long-only strategy against historical daily bars and reports
+total return, CAGR, max drawdown, Sharpe ratio, and win rate. **This is a
+research/backtesting tool only** - it never places real orders and is not
+financial advice. See [docs/13-backtesting.md](./docs/13-backtesting.md).
+
 #### `config` - Configuration Management
 ```bash
 npx claude-flow config <subcommand>
