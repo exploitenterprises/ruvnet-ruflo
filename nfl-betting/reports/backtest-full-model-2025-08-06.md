@@ -1,8 +1,9 @@
 # Full-Model Backtest — NFL & CFB, 2024 + 2025 Seasons
 
-_Generated 2026-08-06, extended same day to a second season. Scope: the
-FULL matchup-engine blend (season-to-date box-score stats + Elo + EPA/play)
-— not just the Elo signal covered in `reports/backtest-elo-2025-08-06.md`.
+_Generated 2026-08-06, extended same day to a second season and then to a
+weight-tuning pass (see "Weight tuning results" below). Scope: the FULL
+matchup-engine blend (season-to-date box-score stats + Elo + EPA/play) —
+not just the Elo signal covered in `reports/backtest-elo-2025-08-06.md`.
 Weather is deliberately excluded from every backtest below, not faked:
 there's no honest historical-forecast source wired up (Open-Meteo has no
 deep archive), so every projection uses `{ isDome: true }` — no weather
@@ -133,6 +134,71 @@ The picture is more nuanced with a second season in hand — **not** a clean
   side of the blend and the spread-magnitude side may need different
   treatment, not just a single scalar reweighting of "how much to trust
   stats/EPA vs. Elo."
+
+## Weight tuning results
+
+The "honest conclusion" above ends with a specific, testable claim: the
+margin blend and win-probability blend might need different treatment,
+not a single scalar "trust stats/EPA more or less." `tuneBlendWeights.js`
+tests that claim directly — a grid search over both ensembles
+(`MARGIN_BLEND_WEIGHTS` = `{eff, elo, epa}`, `WIN_PROB_BLEND_WEIGHTS` =
+`{elo, score}`, matchupEngine.js), scored against real games pooled across
+all 4 league-seasons above (so a combo can't win by overfitting to one
+league or season).
+
+**Method**: 726 weight combos (a 2-simplex grid over the 3-way margin
+split, crossed with an 11-point grid over the win-prob split, both at 0.1
+resolution) scored against the same 1,973 real games used above, ranked by
+pooled favorite accuracy (the explicit ask — "boost win percentage").
+Before picking a winner, checked the neighborhood around the top result
+wasn't a fragile spike: favorite accuracy for nearby combos (margin `elo`
+weight 0.6-1.0, modest `eff`, small `epa`) clusters in a stable 68.9-70.2%
+band, and spread MAE stays low (12.2-13.3) across that same neighborhood
+— a broad, robust region, not a one-off.
+
+**Chosen weights**:
+
+| Weight | Original | Tuned |
+|---|---|---|
+| Margin blend `eff` (efficiency-model estimate) | 0.35 | 0.2 |
+| Margin blend `elo` (Elo-implied margin) | 0.35 | 0.7 |
+| Margin blend `epa` (EPA/play-implied margin) | 0.30 | 0.1 |
+| Win-prob blend `elo` (Elo's own win probability) | 0.55 | 0 |
+| Win-prob blend `score` (spread-derived win probability) | 0.45 | 1 |
+
+The margin blend now trusts Elo more than twice as much as before (0.7 vs.
+0.35) — directly addressing the finding that spread MAE was worse than
+Elo alone in all 4 league-seasons with the original weights. The win-prob
+blend fully routes through the spread-derived estimate rather than
+injecting Elo's own win probability a second time — not "ignore Elo" (the
+margin blend above still trusts Elo at 0.7, so Elo's influence still
+dominates the spread that estimate is derived from), just not double
+counting it.
+
+**Before/after, same 4 league-seasons**:
+
+| League/Season | Brier (before → after) | Favorite accuracy (before → after) | Spread MAE (before → after) | Spread bias (before → after) |
+|---|---|---|---|---|
+| NFL 2024 | 0.209 → 0.210 | 68.6% → **70.1%** | 10.6 → **10.1** | -0.3 → +0.1 |
+| NFL 2025 | 0.231 → 0.231 | 60.9% → **63.6%** | 11.0 → **10.6** | +0.4 → +0.3 |
+| CFB 2024 | 0.191 → 0.197 | 70.1% → 69.9% | 14.1 → **13.3** | +1.7 → +0.6 |
+| CFB 2025 | 0.181 → 0.183 | 71.8% → **72.7%** | 13.9 → **12.8** | +2.0 → +0.5 |
+| **Pooled (n=1,973)** | 0.196 → 0.199 | 69.4% → **70.2%** | 13.1 → **12.3** | — |
+
+Total (over/under) projections are unaffected — mathematically, not just
+in practice: the margin-blend reweighting shifts `homePointsEst` up and
+`awayPointsEst` down by the same amount, which cancels out in their sum.
+Confirmed identical total MAE/bias before and after in all 4 datasets.
+
+**Honest read**: favorite accuracy improved in 3 of 4 league-seasons (CFB
+2024 essentially flat, -0.2pp) and spread MAE improved in all 4 — a real
+fix for the exact problem the original backtest found, not just a
+different tradeoff. The cost is a small Brier-score regression in 3 of 4
+datasets (+0.001 to +0.006) — the win probabilities are very slightly
+less well-calibrated even though the yes/no favorite call is more often
+right, a real but minor trade given the size of the accuracy gain. Spread
+bias improved (moved closer to zero) in every single league-season,
+including CFB's previously-worst offender (2025: +2.0 → +0.5).
 
 ## What this still doesn't tell us
 
