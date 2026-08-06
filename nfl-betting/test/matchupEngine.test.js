@@ -211,18 +211,21 @@ test('marginBlendWeights defaults to MARGIN_BLEND_WEIGHTS and an explicit overri
   assert.notEqual(eloHeavy.projectedSpread, withDefault.projectedSpread);
 });
 
-test('marginBlendWeights renormalizes eff/elo when no EPA data is supplied, matching the pre-EPA fallback', () => {
+test('marginBlendWeights renormalizes eff/elo to sum to 1 when no EPA data is supplied, dropping epa\'s share proportionally', () => {
   const base = {
     home: { abbr: 'A', stats: makeStats(), rating: 1600 },
     away: { abbr: 'B', stats: makeStats(), rating: 1450 },
     leagueAvg,
     weather: { isDome: true },
   };
-  // Default weights (0.35/0.35/0.30) renormalize eff/elo to 0.5/0.5 with no EPA —
-  // same as passing an explicit 0.5/0.5 weighting directly.
-  const defaultNoEpa = projectGame(base);
+  // eff:0.35/elo:0.35/epa:0.30 renormalizes (drop epa, rescale the rest to
+  // sum to 1) to exactly eff:0.5/elo:0.5 — same result as passing that
+  // 0.5/0.5 split directly, regardless of whatever the library's actual
+  // current defaults are (this checks the renormalization math itself, not
+  // a coincidence of one particular default weighting).
+  const renormalized = projectGame({ ...base, marginBlendWeights: { eff: 0.35, elo: 0.35, epa: 0.30 } });
   const explicitHalfHalf = projectGame({ ...base, marginBlendWeights: { eff: 0.5, elo: 0.5, epa: 0 } });
-  assert.equal(defaultNoEpa.projectedSpread, explicitHalfHalf.projectedSpread);
+  assert.equal(renormalized.projectedSpread, explicitHalfHalf.projectedSpread);
 });
 
 test('winProbBlendWeights defaults to WIN_PROB_BLEND_WEIGHTS and an all-Elo override matches raw Elo win probability', () => {

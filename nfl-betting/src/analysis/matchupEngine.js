@@ -11,26 +11,41 @@ import { findStarterInjury, starterInjuryNotes, QB_OUT_POINT_PENALTY } from './i
 const AVG_PLAYS_PER_GAME = 64;
 
 // The two ensembles that combine independently-derived signals into a
-// single projection — set by feel when each signal was added (Elo/eff
-// first, EPA folded in later), never tuned against data until
-// tuneBlendWeights.js could score real backtest results against them (see
-// that file / reports/backtest-weight-tuning-*.md for the search and the
-// before/after: the full-model backtest found spread MAE was worse than
-// Elo alone in all 4 league-seasons tested with these original weights).
+// single projection. Originally set by feel when each signal was added
+// (Elo/eff first, EPA folded in later; eloWinProb/scoreBasedWinProb at
+// 55/45 by feel too), never tuned against data until tuneBlendWeights.js
+// could grid-search real backtest results against them — see that file and
+// reports/backtest-full-model-2025-08-06.md's "Weight tuning results"
+// section for the full search and before/after. Tuned against 1,973 real
+// games pooled across NFL/CFB x 2024/2025 (so a combo can't win by
+// overfitting to one league or season): favorite accuracy improved in 3 of
+// 4 league-seasons (NFL 2025 +3.7pp, the biggest single move) and spread
+// MAE improved in all 4 — the exact metric the original weights were
+// consistently losing to Elo alone on — at the cost of a small (~0.003)
+// Brier-score regression in most datasets. The chosen combo sits in a
+// broad, stable region of the search grid (nearby combos perform
+// similarly), not an isolated spike.
 //
 // MARGIN_BLEND_WEIGHTS: how much the projected point margin trusts the
 // efficiency-model estimate (`eff`) vs. Elo (`elo`) vs. EPA/play (`epa`)
 // when EPA data is available. When it isn't, `eff`/`elo` are renormalized
 // to sum to 1 (dropping `epa`'s share) rather than using a separate
-// hardcoded fallback — e.g. eff:0.35/elo:0.35 renormalizes to 0.5/0.5,
-// which is what the original code hardcoded for the no-EPA case, so this
-// is a strictly more general version of the same behavior, not a change
-// to it.
-export const MARGIN_BLEND_WEIGHTS = { eff: 0.35, elo: 0.35, epa: 0.30 };
+// hardcoded fallback. The tuned weights trust Elo far more than the
+// original 0.35 (0.7 vs. 0.35) — the efficiency/EPA signals apparently
+// carry real *who-wins* information (see WIN_PROB_BLEND_WEIGHTS below) but
+// were overweighted for *by how much*, matching the original backtest's
+// finding almost exactly.
+export const MARGIN_BLEND_WEIGHTS = { eff: 0.2, elo: 0.7, epa: 0.1 };
 // WIN_PROB_BLEND_WEIGHTS: how much the final win probability trusts Elo's
 // own win-probability estimate vs. the score-based estimate derived from
-// the (already-blended) projected margin.
-export const WIN_PROB_BLEND_WEIGHTS = { elo: 0.55, score: 0.45 };
+// the (already-blended) projected margin. Tuned to fully route through the
+// score-based estimate (elo: 0) — not "ignore Elo" (the margin blend above
+// already trusts Elo at 0.7, so Elo's influence still dominates the
+// spread scoreBasedWinProb is derived from), but stop injecting Elo's raw
+// win-probability a second time on top of that, which the search found
+// mildly hurt accuracy versus letting the other signals (eff/EPA) actually
+// register in the final win probability, not just in the spread.
+export const WIN_PROB_BLEND_WEIGHTS = { elo: 0, score: 1 };
 
 // Ratio-based unit projection: expected points a unit produces/allows relative
 // to league average, in the style of a simplified opponent-adjusted efficiency
