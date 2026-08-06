@@ -18,10 +18,16 @@
 //   base URL for college-football, not yet wired — see injuryProvider.js).
 // - Uses CFBD's own Elo ratings directly (real, established, covers all 136
 //   FBS teams — see providers/cfbdProvider.js's fetchEloRatings) rather than
-//   a from-scratch CFB Elo engine, but matchupEngine's Elo-to-points
-//   conversion constant (powerRatings.js's winProbToSpread, 25 Elo points
-//   per point of margin) is NFL-calibrated — a known approximation for CFB,
-//   not a recalibrated one.
+//   a from-scratch CFB Elo engine. cfbEloBacktest.js caught a real -2.4pt
+//   spread bias using the NFL's Elo-to-points constant (25 pts/margin-pt);
+//   investigated whether CFB needs a different constant and, after
+//   correcting a regression-direction mistake in the first attempt (see
+//   powerRatings.js's CFB_ELO_POINTS_PER_MARGIN for the full derivation),
+//   found the constant barely matters — 23 vs 25 give statistically
+//   identical MAE across 1514 real games. Using 23 as the
+//   empirically-verified best single value, but this is a minor
+//   correction, not a real fix for the underlying bias (source unclear —
+//   worth another look once the full-model backtest exists).
 // - Points-for/against (computeTeamPointsSplits) and CFBD's /stats/season
 //   counting stats (pass/rush yards, sacks, third-down rate) are used
 //   consistently "as of query time," not week-scoped. For a real
@@ -42,6 +48,7 @@
 
 import { computeLeagueAverages } from './analysis/leagueAverages.js';
 import { projectGame } from './analysis/matchupEngine.js';
+import { CONSTANTS as ELO_CONSTANTS } from './analysis/powerRatings.js';
 import { buildEdgeBoard, cfbMarketLine } from './analysis/edgeBoard.js';
 import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel } from './analysis/cfbStats.js';
 import { recordSnapshot, computeMovement, describeMovement } from './analysis/lineMovement.js';
@@ -89,6 +96,7 @@ export async function buildCfbEdgeBoard(season, week) {
       away: { abbr: g.awayTeam, stats: seasonStats[g.awayTeam], rating: eloByTeam[g.awayTeam] ?? 1500 },
       leagueAvg,
       neutralSite: g.neutralSite,
+      eloPointsPerMargin: ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN,
     }));
   }
 

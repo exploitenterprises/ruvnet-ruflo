@@ -53,3 +53,14 @@ test('winProbToSpread: favorite win prob maps to a positive point spread', () =>
   const dogSpread = winProbToSpread(0.25);
   assert.ok(dogSpread < 0);
 });
+
+test('winProbToSpread: a smaller eloPointsPerMargin produces a larger-magnitude spread from the same win prob', () => {
+  const nflSpread = winProbToSpread(0.75, CONSTANTS.NFL_ELO_POINTS_PER_MARGIN);
+  const cfbSpread = winProbToSpread(0.75, CONSTANTS.CFB_ELO_POINTS_PER_MARGIN);
+  assert.ok(CONSTANTS.CFB_ELO_POINTS_PER_MARGIN < CONSTANTS.NFL_ELO_POINTS_PER_MARGIN);
+  assert.ok(cfbSpread > nflSpread);
+});
+
+test('winProbToSpread defaults to the NFL constant when no override is given', () => {
+  assert.equal(winProbToSpread(0.75), winProbToSpread(0.75, CONSTANTS.NFL_ELO_POINTS_PER_MARGIN));
+});

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { projectGame } from '../src/analysis/matchupEngine.js';
 import { computeLeagueAverages } from '../src/analysis/leagueAverages.js';
+import { CONSTANTS as ELO_CONSTANTS } from '../src/analysis/powerRatings.js';
 
 function makeStats(overrides = {}) {
   return {
@@ -178,4 +179,19 @@ test('a referee near league average (ratio close to 1) adds no note', () => {
     referee: { name: 'Average Ref', penaltyRatio: 1.02 },
   });
   assert.ok(!proj.schemeNotes.some((n) => n.includes('Average Ref')));
+});
+
+test('eloPointsPerMargin defaults to the NFL constant and CFB\'s (smaller) value widens the Elo-implied spread contribution', () => {
+  const base = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1650 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1400 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  const nflDefault = projectGame(base);
+  const explicitNfl = projectGame({ ...base, eloPointsPerMargin: ELO_CONSTANTS.NFL_ELO_POINTS_PER_MARGIN });
+  assert.equal(nflDefault.projectedSpread, explicitNfl.projectedSpread);
+
+  const cfbVariant = projectGame({ ...base, eloPointsPerMargin: ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN });
+  assert.ok(cfbVariant.projectedSpread > nflDefault.projectedSpread); // same rating gap, larger implied margin
 });

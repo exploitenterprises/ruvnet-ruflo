@@ -6,7 +6,7 @@
 // analysis/backtest.js's file header for what this does and doesn't validate.
 
 import { fetchGames } from './providers/cfbdProvider.js';
-import { matchupWinProbability, winProbToSpread } from './analysis/powerRatings.js';
+import { matchupWinProbability, winProbToSpread, CONSTANTS as ELO_CONSTANTS } from './analysis/powerRatings.js';
 
 export async function backtestCfbSeason(season) {
   const games = await fetchGames(season);
@@ -20,7 +20,7 @@ export async function backtestCfbSeason(season) {
     predictions.push({
       season, week: g.week, homeTeam: g.homeTeam, awayTeam: g.awayTeam,
       homeWinProb, homeWon: g.homePoints > g.awayPoints,
-      projectedSpread: winProbToSpread(homeWinProb),
+      projectedSpread: winProbToSpread(homeWinProb, ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN),
       actualMargin: g.homePoints - g.awayPoints,
     });
   }

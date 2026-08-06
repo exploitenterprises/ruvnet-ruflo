@@ -1,4 +1,4 @@
-import { matchupWinProbability, winProbToSpread } from './powerRatings.js';
+import { matchupWinProbability, winProbToSpread, CONSTANTS as ELO_CONSTANTS } from './powerRatings.js';
 import { computeSchemeTendencies, passRushMismatch } from './schemeTendencies.js';
 import { weatherAdjustment } from './weatherImpact.js';
 import { positionMatchupEdge } from './positionMatchup.js';
@@ -43,9 +43,13 @@ export function projectGame({
   // point/total adjustment (see refereeTendencies.js for why); also typically
   // unavailable this far ahead of kickoff since crews aren't assigned until a few
   // days out — omit unless the caller has a real, known assignment for this game.
+  eloPointsPerMargin = ELO_CONSTANTS.NFL_ELO_POINTS_PER_MARGIN, // Elo-points-per-margin-point
+  // scaling for winProbToSpread — defaults to the NFL constant. CFB callers (cfbEdgeBoard.js)
+  // pass ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN: CFBD's Elo uses a much wider scale (real
+  // blowout margins are far larger in CFB), confirmed by backtest — see powerRatings.js.
 }) {
   const eloWinProb = matchupWinProbability({ homeRating: home.rating, awayRating: away.rating, neutralSite });
-  const eloSpread = winProbToSpread(eloWinProb); // home margin implied by Elo
+  const eloSpread = winProbToSpread(eloWinProb, eloPointsPerMargin); // home margin implied by Elo
 
   // Efficiency-based projection using home/away splits when available,
   // falling back to season-wide numbers.

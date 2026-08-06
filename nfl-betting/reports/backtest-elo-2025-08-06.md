@@ -63,11 +63,27 @@ recorded before each specific game, not an as-of-query-time snapshot (see
 | Spread bias | **-2.4 pts** | A real, non-trivial bias — confirms a concern already documented in `cfbEdgeBoard.js`: the Elo-to-points conversion constant (25 Elo points per point of margin) is NFL-calibrated, not re-derived for CFB's higher-scoring, higher-variance games |
 
 Calibration is strong across the full range (11.5% → 92.1% actual win rate tracking
-the 0-10% → 90-100% buckets closely), which is the headline finding: **CFBD's Elo is
-well-calibrated for win probability even though the Elo→spread point conversion
-this project layers on top of it is measurably biased for CFB.** The fix is a CFB-
-specific recalibration of that conversion constant — a concrete, scoped follow-up,
-not a rebuild.
+the 0-10% → 90-100% buckets closely) — **CFBD's Elo is well-calibrated for win
+probability.**
+
+### Update: the spread-bias "fix" needed correcting
+
+The first attempt at recalibrating the Elo-to-points constant fit
+`eloDiff ~= K * actualMargin` (regressing Elo-diff on margin) and got K≈8.7 — using
+that made the real backtest MAE measurably **worse** (12.9 → 20.8 pts), because that
+regression direction minimizes error in the wrong space (Elo-diff, not the
+projected-spread-vs-actual-margin space that matters). The correct fit minimizes
+`sum((eloDiff/K - margin)^2)` directly, giving `K = sum(eloDiff^2) / sum(eloDiff*margin)`
+— confirmed independently by a direct grid search over K minimizing MAE, same
+answer both ways: **K≈23**, not 8.7 and barely different from the NFL's 25. At
+K=23, MAE is statistically identical to K=25 (13.16 either way across 1514 real
+2024+2025 games) and bias only improves marginally (-2.20 → -1.95, essentially the
+same on the smaller 2025-only sample: -2.4 → -2.2).
+
+**Honest conclusion**: the Elo-to-points constant was never the real source of the
+CFB spread bias — using 23 is a small, verified improvement, not the fix. The
+underlying -2.2pt bias's actual source is still open; worth another look once the
+full-model backtest exists (see below) rather than chasing it further in Elo alone.
 
 ## What this doesn't tell us
 
