@@ -361,13 +361,31 @@
   /* ---------- Section menu (replaces the old horizontal scrolling tab strip) ---------- */
   .menu-btn {
     display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px;
-    border: 1px solid rgba(241,243,248,0.35); background: rgba(241,243,248,0.08); color: inherit;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
     font-family: 'Red Hat Mono', monospace; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   .menu-btn-bars { display: inline-flex; flex-direction: column; gap: 3px; width: 16px; }
   .menu-btn-bars span { display: block; height: 2px; border-radius: 2px; background: currentColor; }
   .menu-btn-bars span:nth-child(2) { width: 70%; }
+
+  /* ---------- Persistent top bar: every "screen" (section) keeps menu + home access ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 22px; background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-brand { display: flex; align-items: center; gap: 8px; }
+  .topbar-mark { width: 26px; height: 29px; flex: 0 0 auto; filter: drop-shadow(0 1px 4px color-mix(in srgb, var(--accent) 55%, transparent)); animation: chiliDance 1.1s ease-in-out infinite; transform-origin: 50% 88%; }
+  .topbar-name { font-family: 'Erica One'; text-transform: uppercase; font-size: 15px; letter-spacing: 0.02em; color: var(--text); }
+  .topbar-home-btn {
+    font-size: 19px; line-height: 1; cursor: pointer; padding: 7px 11px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface-2); -webkit-tap-highlight-color: transparent;
+  }
+  #tab-home:checked ~ .topbar .topbar-home-btn { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+  @media (prefers-reduced-motion: reduce) { .topbar-mark { animation: none; } }
 
   .menu-overlay-bg {
     position: fixed; inset: 0; background: rgba(5,6,10,0.55); opacity: 0; pointer-events: none;
@@ -568,42 +586,6 @@
 
 <div class="app">
 
-  <header class="hero">
-    <div class="brand-row">
-      <label for="menu-toggle" class="menu-btn" aria-label="Open section menu"><span class="menu-btn-bars"><span></span><span></span><span></span></span>Menu</label>
-      <div class="brand">
-        <svg class="mark" viewBox="0 0 200 220" role="img" aria-label="Red Hot Locks logo: a chili pepper dancing"><use href="#chili-mascot"></use></svg>
-        <span class="name">Red <em>Hot</em> Locks</span>
-      </div>
-      <span class="live-chip"><span class="live-dot"></span>Market Read</span>
-    </div>
-
-    <div class="hero-mascot-wrap">
-      <svg class="hero-mascot" viewBox="0 0 200 220" role="img" aria-label="Red Hot Locks mascot: a muscular chili pepper dancing"><use href="#chili-mascot"></use></svg>
-    </div>
-    <h1>The Board</h1>
-    <p class="sub">NFL &amp; College Football — futures, transactions, and weekly picks, game lines and player props, wherever the market and the story disagree. No cap on how many signals we surface.</p>
-    <div class="meta-row">
-      <span class="meta-chip">Updated <b>Aug 2, 2026 · 7:17 PM ET</b></span>
-      <span class="meta-chip">Edition <b>Preseason — Kickoff Week</b></span>
-      <span class="meta-chip">Next drop <b>Tue, Aug 4</b></span>
-    </div>
-  </header>
-
-  <div class="record-band">
-    <p class="eyebrow" style="margin-bottom:8px;">Track Record</p>
-    <div class="record-strip">
-      <div class="record-tile"><div class="lbl">Overall</div><div class="score num">0–0</div><div class="pct">no graded picks yet</div></div>
-      <div class="record-tile"><div class="lbl">Games</div><div class="score num">0–0</div><div class="pct">—</div></div>
-      <div class="record-tile"><div class="lbl">Props</div><div class="score num">0–0</div><div class="pct">—</div></div>
-      <div class="record-tile"><div class="lbl">Season Units</div><div class="score num">0.0u</div><div class="pct">no graded picks yet</div></div>
-    </div>
-    <div class="streak-row">
-      <span class="streak-badge">— streak</span>
-      <p>First board just went up — nothing's been graded yet. Every committed pick from here gets logged and tracked, unit size and all; hedged "market snapshot" notes (like the reads below) don't count toward the record. Full ledger in <span class="num">nfl-betting/data/picks-ledger.json</span>.</p>
-    </div>
-  </div>
-
   <input type="radio" name="tabs" id="tab-home" class="tab-input" checked>
   <input type="radio" name="tabs" id="tab-nfl-futures" class="tab-input">
   <input type="radio" name="tabs" id="tab-nfl-props" class="tab-input">
@@ -638,7 +620,54 @@
     </div>
   </nav>
 
+  <!-- Always visible, on every section: menu access + a quick jump back to
+       Home — this is what makes switching sections feel like moving to a
+       new screen (below) rather than scrolling within one long page. -->
+  <div class="topbar">
+    <label for="menu-toggle" class="menu-btn" aria-label="Open section menu"><span class="menu-btn-bars"><span></span><span></span><span></span></span>Menu</label>
+    <div class="topbar-brand">
+      <svg class="topbar-mark" viewBox="0 0 200 220" role="img" aria-label="Red Hot Locks logo: a chili pepper dancing"><use href="#chili-mascot"></use></svg>
+      <span class="topbar-name">Red Hot Locks</span>
+    </div>
+    <label for="tab-home" class="topbar-home-btn" aria-label="Go to Home">🏠</label>
+  </div>
+
   <div class="panel panel-home">
+
+  <header class="hero">
+    <div class="brand-row">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 200 220" role="img" aria-label="Red Hot Locks logo: a chili pepper dancing"><use href="#chili-mascot"></use></svg>
+        <span class="name">Red <em>Hot</em> Locks</span>
+      </div>
+      <span class="live-chip"><span class="live-dot"></span>Market Read</span>
+    </div>
+
+    <div class="hero-mascot-wrap">
+      <svg class="hero-mascot" viewBox="0 0 200 220" role="img" aria-label="Red Hot Locks mascot: a muscular chili pepper dancing"><use href="#chili-mascot"></use></svg>
+    </div>
+    <h1>The Board</h1>
+    <p class="sub">NFL &amp; College Football — futures, transactions, and weekly picks, game lines and player props, wherever the market and the story disagree. No cap on how many signals we surface.</p>
+    <div class="meta-row">
+      <span class="meta-chip">Updated <b>Aug 2, 2026 · 7:17 PM ET</b></span>
+      <span class="meta-chip">Edition <b>Preseason — Kickoff Week</b></span>
+      <span class="meta-chip">Next drop <b>Tue, Aug 4</b></span>
+    </div>
+  </header>
+
+  <div class="record-band">
+    <p class="eyebrow" style="margin-bottom:8px;">Track Record</p>
+    <div class="record-strip">
+      <div class="record-tile"><div class="lbl">Overall</div><div class="score num">0–0</div><div class="pct">no graded picks yet</div></div>
+      <div class="record-tile"><div class="lbl">Games</div><div class="score num">0–0</div><div class="pct">—</div></div>
+      <div class="record-tile"><div class="lbl">Props</div><div class="score num">0–0</div><div class="pct">—</div></div>
+      <div class="record-tile"><div class="lbl">Season Units</div><div class="score num">0.0u</div><div class="pct">no graded picks yet</div></div>
+    </div>
+    <div class="streak-row">
+      <span class="streak-badge">— streak</span>
+      <p>First board just went up — nothing's been graded yet. Every committed pick from here gets logged and tracked, unit size and all; hedged "market snapshot" notes (like the reads below) don't count toward the record. Full ledger in <span class="num">nfl-betting/data/picks-ledger.json</span>.</p>
+    </div>
+  </div>
 
   <section>
     <div class="section-head">
