@@ -24,6 +24,20 @@ test('calibrationBuckets clamps a homeWinProb of exactly 1.0 into the last bucke
   assert.equal(buckets[9].n, 1);
 });
 
+test('calibrationBuckets skips a NaN/out-of-range probability instead of crashing the whole report', () => {
+  // Regression test: a real upstream data bug (ratings corrupted to NaN —
+  // see ratingsStore.test.js) crashed this on `buckets[NaN].n += 1`. One
+  // bad prediction shouldn't take down the whole calibration report.
+  const buckets = calibrationBuckets([
+    { homeWinProb: NaN, homeWon: true },
+    { homeWinProb: -0.1, homeWon: true },
+    { homeWinProb: 1.1, homeWon: false },
+    { homeWinProb: 0.55, homeWon: true },
+  ]);
+  const total = buckets.reduce((s, b) => s + b.n, 0);
+  assert.equal(total, 1); // only the valid 0.55 prediction counted
+});
+
 test('brierScore: 0 for a perfectly confident correct call, 1 for a perfectly confident wrong one', () => {
   assert.equal(brierScore([{ homeWinProb: 1, homeWon: true }]), 0);
   assert.equal(brierScore([{ homeWinProb: 0, homeWon: true }]), 1);

@@ -228,7 +228,7 @@ async function runWithLiveData({ season, week, generatedAt }) {
 
 // ESPN's team-statistics field names aren't stable across categories; this is
 // a best-effort mapping documented for maintainers to adjust as the schema drifts.
-function mapEspnStatsToModel(abbr, raw) {
+export function mapEspnStatsToModel(abbr, raw) {
   return {
     abbr,
     gamesPlayed: raw.gamesPlayed ?? 17,

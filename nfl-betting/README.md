@@ -290,6 +290,40 @@ into what the board displays:
 The displayed record is only ever derived from the ledger — never
 hand-written — so it can't drift from what was actually picked and graded.
 
+## Backtesting
+
+`src/analysis/backtest.js` scores a set of predictions against known outcomes:
+calibration buckets (does a "60-70% favorite" actually win 60-70% of the time?),
+Brier score, straight-up favorite accuracy, spread MAE/bias, and — the direct test
+of whether the edge board's ranking has real predictive value — ATS performance at
+increasing model-vs-market disagreement thresholds.
+
+**Scope, stated plainly**: only signals that can be honestly reconstructed
+point-in-time (no lookahead) are backtestable today. Power ratings (Elo) qualify —
+`src/nflEloBacktest.js` replays a completed NFL season week-by-week using only real
+game results (seeded from the real, fully-known prior season); `src/cfbEloBacktest.js`
+uses CFBD's own per-game pregame Elo directly, which is already point-in-time. The
+full matchup engine (efficiency stats + EPA + weather + scheme blended together)
+isn't backtestable yet — CFBD's `/stats/season` and ESPN's `fetchTeamSeasonStats`
+are both "as of query time" aggregates, not point-in-time historical snapshots, so
+scoring the full model against a past season would silently leak future information
+into the past.
+
+Running the NFL backtest for the first time surfaced a real, live-pipeline-affecting
+bug, not a hypothetical one: ESPN returns `"WSH"` for Washington while this
+project's team table uses `"WAS"`. The mismatch made `ratingsStore.js`'s
+`applyResults` compute `undefined + number` (`NaN`), corrupting both teams in the
+game and cascading to everyone they played afterward — nearly half of a season's
+predictions came back `NaN` before the fix. Fixed at the source
+(`statsProvider.js` normalizes the abbreviation) plus a hard defensive guard in
+`applyResults` itself, so any future unknown-abbreviation case fails safe (skips
+one game) instead of corrupting the league's ratings again — see
+`reports/backtest-elo-2025-08-06.md` for the full writeup and the actual numbers
+(NFL: Brier 0.227, 62.7% favorite accuracy; CFB: Brier 0.183, 73.1% favorite
+accuracy, but a real -2.4pt spread bias that confirms the NFL-calibrated Elo-to-
+points conversion constant needs a CFB-specific recalibration — a concrete,
+scoped follow-up).
+
 ## Setup
 
 ```bash

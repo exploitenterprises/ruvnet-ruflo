@@ -36,10 +36,20 @@ export function seedSeasonRatings(priorSeasonStatsByTeam) {
 }
 
 // Apply a batch of completed-game results to move ratings forward one week.
+// Skips (rather than processes) a game where either team's abbreviation
+// isn't already a known rating — `undefined + number` is NaN in JS, and
+// that NaN would corrupt BOTH teams' ratings and then cascade to every team
+// they play afterward. Found by backtesting a live abbreviation mismatch
+// (ESPN's "WSH" vs this project's "WAS" — now normalized at the source in
+// statsProvider.js) that did exactly this; kept as a hard guard here too
+// so any future unknown-abbreviation case (a franchise relocation, an API
+// change) fails safe — dropping one game's rating update — instead of
+// silently corrupting the whole league's ratings with NaN.
 export function applyResults(ratings, completedGames) {
   const next = { ...ratings };
   for (const g of completedGames) {
     if (g.home.score == null || g.away.score == null) continue;
+    if (typeof next[g.home.abbr] !== 'number' || typeof next[g.away.abbr] !== 'number') continue;
     const { homeRating, awayRating } = updateRatingsAfterGame({
       homeRating: next[g.home.abbr],
       awayRating: next[g.away.abbr],

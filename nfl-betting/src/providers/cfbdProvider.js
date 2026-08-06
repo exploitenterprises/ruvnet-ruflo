@@ -95,6 +95,11 @@ export async function fetchGames(year, { week, seasonType = 'regular' } = {}) {
     homeTeam: g.homeTeam, homePoints: g.homePoints,
     awayTeam: g.awayTeam, awayPoints: g.awayPoints,
     venue: g.venue,
+    // Genuinely point-in-time (CFBD's own Elo as it stood immediately
+    // before this specific game, not the current/as-of-query-time snapshot
+    // fetchEloRatings returns) — the one CFB signal that can be honestly
+    // backtested without lookahead. See cfbEloBacktest.js.
+    homePregameElo: g.homePregameElo, awayPregameElo: g.awayPregameElo,
   }));
 }
 

@@ -6,6 +6,20 @@
 
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl';
 
+// ESPN uses "WSH" for Washington; this project's canonical team table
+// (data/teams.js) uses "WAS" — confirmed by direct comparison of every
+// abbreviation both sources return, the only mismatch in the full 32-team
+// set. Left uncaught, ratingsStore.js's applyResults computes
+// `undefined + number` (NaN) for a team with no matching rating entry, and
+// that NaN corrupts BOTH teams in the game, then cascades to everyone they
+// play afterward — found by backtesting, a real accuracy bug, not
+// hypothetical. Normalized once here, at the source, rather than special-
+// cased in every consumer.
+const ESPN_ABBR_TO_CANONICAL = { WSH: 'WAS' };
+function canonicalAbbr(espnAbbr) {
+  return ESPN_ABBR_TO_CANONICAL[espnAbbr] ?? espnAbbr;
+}
+
 async function getJson(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`ESPN API ${res.status} ${res.statusText} for ${url}`);
@@ -25,8 +39,8 @@ export async function fetchWeekScoreboard(season, week, seasontype = 2) {
       completed: comp?.status?.type?.completed ?? false,
       venue: comp?.venue?.fullName,
       neutralSite: comp?.neutralSite ?? false,
-      home: { abbr: home?.team?.abbreviation, score: home?.score != null ? Number(home.score) : null },
-      away: { abbr: away?.team?.abbreviation, score: away?.score != null ? Number(away.score) : null },
+      home: { abbr: canonicalAbbr(home?.team?.abbreviation), score: home?.score != null ? Number(home.score) : null },
+      away: { abbr: canonicalAbbr(away?.team?.abbreviation), score: away?.score != null ? Number(away.score) : null },
     };
   });
 }
@@ -48,5 +62,5 @@ export async function fetchTeamSeasonStats(season, espnTeamId) {
 export async function fetchTeamsIndex() {
   const json = await getJson(`${BASE}/teams`);
   const list = json.sports?.[0]?.leagues?.[0]?.teams ?? [];
-  return list.map((t) => ({ id: t.team.id, abbr: t.team.abbreviation }));
+  return list.map((t) => ({ id: t.team.id, abbr: canonicalAbbr(t.team.abbreviation) }));
 }

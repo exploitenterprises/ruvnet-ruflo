@@ -23,6 +23,10 @@
 export function calibrationBuckets(predictions) {
   const buckets = Array.from({ length: 10 }, (_, i) => ({ lo: i / 10, hi: (i + 1) / 10, n: 0, wins: 0 }));
   for (const p of predictions) {
+    // A NaN or out-of-[0,1]-range probability (upstream data issue — e.g.
+    // the ratings-corruption bug this module's live backtests uncovered)
+    // gets skipped rather than crashing the whole report over one bad point.
+    if (!Number.isFinite(p.homeWinProb) || p.homeWinProb < 0 || p.homeWinProb > 1) continue;
     const idx = Math.min(9, Math.floor(p.homeWinProb * 10));
     buckets[idx].n += 1;
     if (p.homeWon) buckets[idx].wins += 1;
