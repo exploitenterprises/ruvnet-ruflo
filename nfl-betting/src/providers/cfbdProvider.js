@@ -25,11 +25,19 @@ function requireKey() {
   return key;
 }
 
-async function getJson(path) {
+// Retries on a 5xx (real, observed: a 503 killed a multi-minute, multi-call
+// tuning run partway through with no partial-progress recovery — CFBD's own
+// infrastructure hiccup, not a request problem, confirmed by the retry
+// succeeding). Never retries a 4xx (bad key, bad params) — that's not
+// transient and retrying just delays a real error.
+async function getJson(path, { retries = 3 } = {}) {
   const key = requireKey();
-  const res = await fetch(`${BASE}${path}`, { headers: { Authorization: `Bearer ${key}` } });
-  if (!res.ok) throw new Error(`CFBD API ${res.status} ${res.statusText} for ${path}`);
-  return res.json();
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${BASE}${path}`, { headers: { Authorization: `Bearer ${key}` } });
+    if (res.ok) return res.json();
+    if (res.status < 500 || attempt >= retries) throw new Error(`CFBD API ${res.status} ${res.statusText} for ${path}`);
+    await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+  }
 }
 
 // `location` carries real per-stadium lat/lon/dome (confirmed live: e.g.
