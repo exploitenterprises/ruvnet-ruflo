@@ -386,16 +386,22 @@
   .menu-panel-head span { font-family: 'Erica One'; text-transform: uppercase; font-size: 15px; letter-spacing: 0.03em; color: var(--text-dim); }
   .menu-close { font-size: 20px; line-height: 1; cursor: pointer; color: var(--text-dim); padding: 4px 8px; }
   .menu-section-label {
-    padding: 14px 20px 6px; font-family: 'Red Hat Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em;
+    padding: 14px 16px 6px; font-family: 'Red Hat Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--text-dim);
   }
   .menu-item {
-    display: flex; align-items: center; gap: 12px; padding: 16px 20px; font-size: 17px; cursor: pointer;
-    border-top: 1px solid var(--line); color: var(--text); -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; gap: 10px; padding: 14px 16px; font-size: 16px; cursor: pointer;
+    border-top: 1px solid var(--line); color: var(--text); -webkit-tap-highlight-color: transparent; line-height: 1.2;
   }
   .menu-panel-head + .menu-item, .menu-section-label + .menu-item { border-top: none; }
-  .menu-item-icon { font-size: 19px; width: 24px; text-align: center; flex: 0 0 auto; }
+  .menu-item-icon { font-size: 18px; width: 22px; text-align: center; flex: 0 0 auto; }
   .menu-item:active { background: var(--surface-2); }
+
+  /* Two league columns (NFL / CFB) side by side, so every section is
+     visible near the top of the menu without scrolling. */
+  .menu-columns { display: grid; grid-template-columns: 1fr 1fr; }
+  .menu-column { display: flex; flex-direction: column; min-width: 0; }
+  .menu-column + .menu-column { border-left: 1px solid var(--line); }
 
   #tab-home:checked ~ .menu-panel .menu-item[for="tab-home"],
   #tab-nfl-futures:checked ~ .menu-panel .menu-item[for="tab-nfl-futures"],
@@ -615,15 +621,21 @@
       <label for="menu-toggle" class="menu-close" aria-label="Close menu">✕</label>
     </div>
     <label for="tab-home" class="menu-item"><span class="menu-item-icon">🏠</span>Home</label>
-    <div class="menu-section-label">NFL</div>
-    <label for="tab-nfl-futures" class="menu-item"><span class="menu-item-icon">🏈</span>Futures</label>
-    <label for="tab-nfl-props" class="menu-item"><span class="menu-item-icon">🎯</span>Props</label>
-    <label for="tab-nfl-games" class="menu-item"><span class="menu-item-icon">📋</span>Picks</label>
-    <label for="tab-nfl-edge" class="menu-item"><span class="menu-item-icon">📐</span>Edge Board</label>
-    <div class="menu-section-label">College Football</div>
-    <label for="tab-cfb-futures" class="menu-item"><span class="menu-item-icon">🎓</span>Futures</label>
-    <label for="tab-cfb-games" class="menu-item"><span class="menu-item-icon">📋</span>Picks</label>
-    <label for="tab-cfb-edge" class="menu-item"><span class="menu-item-icon">📐</span>Edge Board</label>
+    <div class="menu-columns">
+      <div class="menu-column">
+        <div class="menu-section-label">NFL</div>
+        <label for="tab-nfl-futures" class="menu-item"><span class="menu-item-icon">🏈</span>Futures</label>
+        <label for="tab-nfl-props" class="menu-item"><span class="menu-item-icon">🎯</span>Props</label>
+        <label for="tab-nfl-games" class="menu-item"><span class="menu-item-icon">📋</span>Picks</label>
+        <label for="tab-nfl-edge" class="menu-item"><span class="menu-item-icon">📐</span>Edge Board</label>
+      </div>
+      <div class="menu-column">
+        <div class="menu-section-label">CFB</div>
+        <label for="tab-cfb-futures" class="menu-item"><span class="menu-item-icon">🎓</span>Futures</label>
+        <label for="tab-cfb-games" class="menu-item"><span class="menu-item-icon">📋</span>Picks</label>
+        <label for="tab-cfb-edge" class="menu-item"><span class="menu-item-icon">📐</span>Edge Board</label>
+      </div>
+    </div>
   </nav>
 
   <div class="panel panel-home">
