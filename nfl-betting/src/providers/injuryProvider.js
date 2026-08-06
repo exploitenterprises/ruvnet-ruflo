@@ -17,8 +17,14 @@ const execFileAsync = promisify(execFile);
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl';
 const CFB_BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football';
 
+// --retry-all-errors covers a raw dropped connection (curl exit 35,
+// SSL_ERROR_SYSCALL), not just timeouts/5xx — see statsProvider.js's
+// getJson for where this was actually observed (hundreds of sequential
+// calls in a full-season backtest hit one transient reset).
 async function getJson(url) {
-  const { stdout } = await execFileAsync('curl', ['-sS', '-w', '\n%{http_code}', url], { maxBuffer: 20 * 1024 * 1024 });
+  const { stdout } = await execFileAsync('curl', [
+    '-sS', '-w', '\n%{http_code}', '--retry', '3', '--retry-all-errors', '--retry-delay', '1', url,
+  ], { maxBuffer: 20 * 1024 * 1024 });
   const splitAt = stdout.lastIndexOf('\n');
   const body = stdout.slice(0, splitAt);
   const statusCode = Number(stdout.slice(splitAt + 1).trim());

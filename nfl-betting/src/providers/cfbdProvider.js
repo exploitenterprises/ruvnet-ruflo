@@ -56,9 +56,18 @@ export async function fetchTalentComposite(year) {
 // Season-to-date advanced team stats (success rate, PPA/EPA-equivalent,
 // explosiveness) — the CFB analogue of nflfastR's EPA, and the missing piece
 // for building a CFB matchup engine as rigorous as the NFL side's.
-export async function fetchAdvancedTeamStats(year, team) {
+// `startWeek`/`endWeek` genuinely reconstruct a point-in-time slice, not
+// just the full-season aggregate with an ignored filter — confirmed live:
+// Air Force's offense.plays was 262 for startWeek=1&endWeek=5 vs. 823 for
+// the full season. That's what makes cfbFullBacktest.js possible without
+// per-game box-score reconstruction (contrast with the NFL side — ESPN's
+// team-statistics endpoint silently ignores a week filter, see
+// statsProvider.js's fetchGameBoxscore for why NFL needed that instead).
+export async function fetchAdvancedTeamStats(year, { team, startWeek, endWeek } = {}) {
   const params = new URLSearchParams({ year: String(year) });
   if (team) params.set('team', team);
+  if (startWeek != null) params.set('startWeek', String(startWeek));
+  if (endWeek != null) params.set('endWeek', String(endWeek));
   return getJson(`/stats/season/advanced?${params}`);
 }
 
@@ -70,9 +79,14 @@ export async function fetchAdvancedTeamStats(year, team) {
 // cfbWeeklyUpdate.js maps into matchupEngine's expected shape — unlike
 // fetchAdvancedTeamStats, this has no points-for/against, so those still
 // need to be derived from fetchGames.
-export async function fetchSeasonStats(year, { team } = {}) {
+// `startWeek`/`endWeek` genuinely scope this to a point-in-time slice too —
+// same confirmation as fetchAdvancedTeamStats above (e.g. Air Force's
+// `games` stat was 4 for startWeek=1&endWeek=5 vs. 12 for the full season).
+export async function fetchSeasonStats(year, { team, startWeek, endWeek } = {}) {
   const params = new URLSearchParams({ year: String(year) });
   if (team) params.set('team', team);
+  if (startWeek != null) params.set('startWeek', String(startWeek));
+  if (endWeek != null) params.set('endWeek', String(endWeek));
   return getJson(`/stats/season?${params}`);
 }
 

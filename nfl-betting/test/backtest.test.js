@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { calibrationBuckets, brierScore, favoriteAccuracy, spreadError, atsThresholdPerformance } from '../src/analysis/backtest.js';
+import { calibrationBuckets, brierScore, favoriteAccuracy, spreadError, totalError, atsThresholdPerformance } from '../src/analysis/backtest.js';
 
 test('calibrationBuckets sorts predictions into 10% probability bins and reports actual win rate', () => {
   const buckets = calibrationBuckets([
@@ -79,6 +79,16 @@ test('spreadError computes mean absolute error and signed bias', () => {
 test('spreadError skips predictions missing either field', () => {
   const err = spreadError([{ projectedSpread: null, actualMargin: 7 }, { projectedSpread: 3, actualMargin: 7 }]);
   assert.equal(err.n, 1);
+});
+
+test('totalError computes mean absolute error and signed bias, same math as spreadError but for totals', () => {
+  const err = totalError([
+    { projectedTotal: 45, actualTotal: 50 }, // error -5
+    { projectedTotal: 40, actualTotal: 38 }, // error +2
+  ]);
+  assert.equal(err.n, 2);
+  assert.equal(err.mae, 3.5);
+  assert.equal(err.bias, -1.5);
 });
 
 test('atsThresholdPerformance: cover math correctly credits home and away bets, and pushes', () => {

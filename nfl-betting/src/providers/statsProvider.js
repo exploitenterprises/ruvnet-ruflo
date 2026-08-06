@@ -32,8 +32,16 @@ function canonicalAbbr(espnAbbr) {
   return ESPN_ABBR_TO_CANONICAL[espnAbbr] ?? espnAbbr;
 }
 
+// --retry-all-errors: a full-season backtest makes hundreds of sequential
+// calls to this host, and hit a genuine transient failure doing exactly
+// that (curl exit 35, SSL_ERROR_SYSCALL — a dropped connection, not an
+// Akamai block, confirmed by it succeeding on retry) — curl's default
+// --retry only covers timeouts/5xx/etc, not a raw connection reset, so
+// --retry-all-errors is needed to actually cover this case.
 async function getJson(url) {
-  const { stdout } = await execFileAsync('curl', ['-sS', '-w', '\n%{http_code}', url], { maxBuffer: 20 * 1024 * 1024 });
+  const { stdout } = await execFileAsync('curl', [
+    '-sS', '-w', '\n%{http_code}', '--retry', '3', '--retry-all-errors', '--retry-delay', '1', url,
+  ], { maxBuffer: 20 * 1024 * 1024 });
   const splitAt = stdout.lastIndexOf('\n');
   const body = stdout.slice(0, splitAt);
   const statusCode = Number(stdout.slice(splitAt + 1).trim());
@@ -42,8 +50,24 @@ async function getJson(url) {
 }
 
 // Final scores + schedule for a given season/week. seasontype: 2 = regular season, 3 = postseason.
+//
+// Real, observed failure mode (not hypothetical): this endpoint silently
+// stopped honoring `year` at some point during a live session — a request
+// for year=2025 week=1 returned season.year: 2026 instead (the *next*
+// season's not-yet-played opener), with no error, no redirect, just a
+// wrong-season payload shaped identically to a right-season one. Caught only
+// because a full-season backtest's week-1 result happened to be re-checked
+// against a known real score after the drift occurred. Guarding here rather
+// than downstream: silently ingesting the wrong season would look like
+// ordinary (if unlucky) data to every caller — ratingsStore, the live
+// weekly pipeline, backtests — all of which trust `completed`/scores at
+// face value. Failing loudly with the season it actually got back turns a
+// silent data-corruption risk into an obvious, debuggable error instead.
 export async function fetchWeekScoreboard(season, week, seasontype = 2) {
   const json = await getJson(`${BASE}/scoreboard?year=${season}&week=${week}&seasontype=${seasontype}`);
+  if (json.season?.year != null && json.season.year !== season) {
+    throw new Error(`ESPN scoreboard returned season ${json.season.year} for a year=${season} request (week ${week}) — the API silently ignored the year param.`);
+  }
   return (json.events ?? []).map((event) => {
     const comp = event.competitions?.[0];
     const home = comp?.competitors?.find((c) => c.homeAway === 'home');
@@ -78,4 +102,24 @@ export async function fetchTeamsIndex() {
   const json = await getJson(`${BASE}/teams`);
   const list = json.sports?.[0]?.leagues?.[0]?.teams ?? [];
   return list.map((t) => ({ id: t.team.id, abbr: canonicalAbbr(t.team.abbreviation) }));
+}
+
+// Per-game team boxscore stats — unlike fetchTeamSeasonStats (confirmed live:
+// ignores a `week` query param, always returns the full-season aggregate),
+// this is the only way to reconstruct NFL season-to-date stats "as of week
+// N" rather than "as of query time": fetch each completed game's boxscore
+// and aggregate them ourselves. See analysis/pointInTimeStats.js for the
+// aggregation and nflFullBacktest.js for why this exists (task: a real
+// backtest of the full matchup-engine blend, not just the Elo signal).
+export async function fetchGameBoxscore(eventId) {
+  const json = await getJson(`${BASE}/summary?event=${eventId}`);
+  const teams = json.boxscore?.teams ?? [];
+  const mapTeam = (t) => {
+    const flat = {};
+    for (const s of t.statistics ?? []) flat[s.name] = s.displayValue;
+    return { abbr: canonicalAbbr(t.team?.abbreviation), stats: flat };
+  };
+  const home = teams.find((t) => t.homeAway === 'home');
+  const away = teams.find((t) => t.homeAway === 'away');
+  return { home: home ? mapTeam(home) : null, away: away ? mapTeam(away) : null };
 }

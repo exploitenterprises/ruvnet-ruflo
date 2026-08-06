@@ -6,15 +6,18 @@
 //
 // What makes a backtest honest is that the predictions were computable
 // without lookahead — using only data that would genuinely have been known
-// before the game. See nflEloBacktest.js / cfbEloBacktest.js for what's
-// actually achievable without lookahead today: power ratings (Elo) can be
-// cleanly reconstructed point-in-time for both leagues, so that's the scope
-// of what gets backtested here. The full matchupEngine blend (efficiency
-// stats + EPA + weather etc.) can't be, yet — CFBD's /stats/season and
-// ESPN's fetchTeamSeasonStats are both "as of query time" aggregates, not
-// point-in-time historical snapshots, so backtesting the full model would
-// silently leak future information into the past (the same lookahead issue
-// already documented and worked around in cfbEdgeBoard.js).
+// before the game. nflEloBacktest.js / cfbEloBacktest.js backtest just the
+// Elo signal, cleanly point-in-time by construction for both leagues.
+// nflFullBacktest.js goes further: it backtests the FULL matchupEngine
+// blend (season-to-date box-score stats + Elo + EPA) by reconstructing
+// "stats as of week N" from real per-game boxscores instead of ESPN's
+// fetchTeamSeasonStats (confirmed live to always be an "as of query time"
+// aggregate — a `week` query param is silently ignored) — see
+// analysis/pointInTimeStats.js and nflFullBacktest.js's file header. CFBD's
+// /stats/season and /stats/season/advanced turned out to genuinely support
+// this already via startWeek/endWeek params (confirmed live: games=4 for
+// weeks 1-5 vs. games=12 full season) — no reconstruction needed on the CFB
+// side, see cfbFullBacktest.js.
 
 // Calibration: buckets predictions by predicted probability (10% bins) and
 // reports the actual win rate in each — a well-calibrated model's "60-70%"
@@ -67,6 +70,19 @@ export function spreadError(predictions) {
   const withData = predictions.filter((p) => p.projectedSpread != null && p.actualMargin != null);
   if (!withData.length) return null;
   const errors = withData.map((p) => p.projectedSpread - p.actualMargin);
+  return {
+    n: withData.length,
+    mae: round1(errors.reduce((s, e) => s + Math.abs(e), 0) / errors.length),
+    bias: round1(errors.reduce((s, e) => s + e, 0) / errors.length),
+  };
+}
+
+// Same as spreadError but for the model's projected total vs. the actual
+// combined score — `predictions` is [{ projectedTotal, actualTotal }].
+export function totalError(predictions) {
+  const withData = predictions.filter((p) => p.projectedTotal != null && p.actualTotal != null);
+  if (!withData.length) return null;
+  const errors = withData.map((p) => p.projectedTotal - p.actualTotal);
   return {
     n: withData.length,
     mae: round1(errors.reduce((s, e) => s + Math.abs(e), 0) / errors.length),

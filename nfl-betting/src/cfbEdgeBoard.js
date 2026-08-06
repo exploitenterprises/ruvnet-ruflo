@@ -38,21 +38,20 @@
 //   worth another look once the full-model backtest exists).
 // - Points-for/against (computeTeamPointsSplits) and CFBD's /stats/season
 //   counting stats (pass/rush yards, sacks, third-down rate) are used
-//   consistently "as of query time," not week-scoped. For a real
-//   in-progress season this is correct by construction (future games
-//   simply aren't `completed` yet, so there's nothing to leak). It matters
-//   only when backtesting an already-finished historical season, where both
-//   halves will reflect full-season rates rather than a true
-//   through-week-N snapshot — tried partially week-scoping just the points
-//   half for that case and it made projections measurably worse (median
-//   model-vs-market gap roughly doubled) by decoupling it from the
-//   still-full-season rate stats it's blended with; consistency between the
-//   two matters more than a partial fix. computeTeamPointsSplits's
-//   throughWeek option is kept for if/when a week-scoped stats source is
-//   added for both halves. Verified live against real 2025 data — market
-//   lines join correctly and projections compute without crashing, though
-//   the historical-backtest lookahead caveat above means the gap sizes seen
-//   there shouldn't be read as validation of real predictive accuracy.
+//   consistently "as of query time," not week-scoped, for a real
+//   in-progress week — correct by construction (future games simply
+//   aren't `completed` yet, so there's nothing to leak), and simpler than
+//   passing a redundant startWeek/endWeek on every live call. CORRECTION to
+//   an earlier version of this comment: /stats/season and
+//   /stats/season/advanced DO support genuine week-scoping via
+//   startWeek/endWeek params (confirmed live: Air Force's `games` stat was
+//   4 for weeks 1-5 vs. 12 full-season) — this was wrongly assumed
+//   unsupported when EPA was first wired in. That's what makes
+//   cfbFullBacktest.js possible without per-game box-score reconstruction
+//   (contrast the NFL side's nflFullBacktest.js, which needs exactly that
+//   reconstruction because ESPN's equivalent endpoint really does ignore a
+//   week filter). Verified live against real 2025 data — market lines join
+//   correctly and projections compute without crashing.
 
 import { computeLeagueAverages } from './analysis/leagueAverages.js';
 import { projectGame } from './analysis/matchupEngine.js';
