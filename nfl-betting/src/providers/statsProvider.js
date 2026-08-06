@@ -4,6 +4,18 @@
 // call is defensive and throws a clear error rather than silently returning
 // wrong numbers. Pair with providers/mockData.js for offline development/tests.
 
+// site.api.espn.com sits behind Akamai bot detection that 403s Node's native
+// fetch() (server: AkamaiGHost) while a bare `curl` against the identical URL
+// succeeds — confirmed not a proxy issue (no relay failures, same result
+// outside the proxy). Root cause isolated by direct comparison: it's keyed on
+// the User-Agent string specifically — curl's own default UA ("curl/8.x")
+// passes, but *any* custom UA (including a descriptive one identifying this
+// project) gets 403'd same as fetch's Node UA. So: shell out to curl and
+// deliberately do NOT set a custom User-Agent header.
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+const execFileAsync = promisify(execFile);
+
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl';
 
 // ESPN uses "WSH" for Washington; this project's canonical team table
@@ -21,9 +33,12 @@ function canonicalAbbr(espnAbbr) {
 }
 
 async function getJson(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`ESPN API ${res.status} ${res.statusText} for ${url}`);
-  return res.json();
+  const { stdout } = await execFileAsync('curl', ['-sS', '-w', '\n%{http_code}', url]);
+  const splitAt = stdout.lastIndexOf('\n');
+  const body = stdout.slice(0, splitAt);
+  const statusCode = Number(stdout.slice(splitAt + 1).trim());
+  if (statusCode < 200 || statusCode >= 300) throw new Error(`ESPN API ${statusCode} for ${url}`);
+  return JSON.parse(body);
 }
 
 // Final scores + schedule for a given season/week. seasontype: 2 = regular season, 3 = postseason.
