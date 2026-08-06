@@ -60,7 +60,13 @@ function normalizeGameLines(events) {
 }
 
 function mapOutcome({ event, homeTeam, awayTeam, bookmaker, market, outcome }) {
-  const base = { gameId: event.id, book: bookmaker.title, price: outcome.price };
+  // homeTeam/awayTeam (The Odds API's own full team names, e.g. "Kansas City
+  // Chiefs") are carried through here deliberately: `event.id` is an Odds-API-
+  // internal id that never matches ESPN's event ids (statsProvider.js's
+  // fetchWeekScoreboard), so callers joining these lines to ESPN-sourced
+  // projections must match on team name (via src/data/teams.js's TEAMS[abbr].name),
+  // not gameId — see weeklyUpdate.js's runWithLiveData.
+  const base = { gameId: event.id, homeTeam, awayTeam, book: bookmaker.title, price: outcome.price };
   if (market.key === 'h2h') {
     return { ...base, market: 'moneyline', side: outcome.name === homeTeam ? 'home' : 'away' };
   }

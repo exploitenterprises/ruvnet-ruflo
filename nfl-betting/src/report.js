@@ -1,4 +1,4 @@
-export function renderWeeklyMarkdown({ season, week, source, projections, valueBets, futuresValue, generatedAt }) {
+export function renderWeeklyMarkdown({ season, week, source, projections, valueBets, futuresValue, generatedAt, edgeBoard = [], lineMovementNotes = [] }) {
   const lines = [];
   lines.push(`# NFL Betting Strategy — Week ${week}, ${season} Season`);
   lines.push('');
@@ -15,6 +15,32 @@ export function renderWeeklyMarkdown({ season, week, source, projections, valueB
   for (const p of projections) {
     const notes = [...p.weatherNotes, ...p.schemeNotes].join('; ');
     lines.push(`| ${p.away} @ ${p.home} | ${p.away} ${p.projectedAwayScore} – ${p.home} ${p.projectedHomeScore} | ${p.projectedSpread > 0 ? 'home -' + p.projectedSpread : 'home +' + Math.abs(p.projectedSpread)} | ${p.projectedTotal} | ${(p.homeWinProb * 100).toFixed(1)}% | ${notes || '—'} |`);
+  }
+  lines.push('');
+
+  lines.push('## Model vs. Market (Edge Board)');
+  lines.push('');
+  lines.push('_Not picks — just what the model thinks the spread/total should be, next to what the market has, ranked by the size of the disagreement. Decide what to do with the gap yourself._');
+  lines.push('');
+  if (edgeBoard.length === 0) {
+    lines.push('_No market lines available to compare against this run._');
+  } else {
+    lines.push('| Game | Model Spread | Market Spread | Gap | Model Total | Market Total | Gap |');
+    lines.push('|---|---|---|---|---|---|---|');
+    for (const e of edgeBoard) {
+      lines.push(`| ${e.game} | ${e.projectedSpread} | ${e.marketSpread ?? '—'} | ${e.spreadGap ?? '—'} | ${e.projectedTotal} | ${e.marketTotal ?? '—'} | ${e.totalGap ?? '—'} |`);
+    }
+  }
+  lines.push('');
+
+  lines.push('## Line Movement');
+  lines.push('');
+  lines.push('_This pipeline\'s own real market-line snapshots over time — not a paid historical-odds feed or a public bet-percentage source (both checked directly and ruled out; see analysis/lineMovement.js). A game only shows here once we\'ve seen it more than once._');
+  lines.push('');
+  if (lineMovementNotes.length === 0) {
+    lines.push('_No notable movement yet this run — either every game is new to tracking, or nothing has moved half a point or more since first seen._');
+  } else {
+    for (const note of lineMovementNotes) lines.push(`- ${note}`);
   }
   lines.push('');
 

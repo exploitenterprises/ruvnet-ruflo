@@ -81,7 +81,12 @@ providers/            live data in                 analysis/                 rep
 │ oddsProvider    │ sportsbook lines ───────▶ │ futures (Monte Carlo)   │
 │ (The Odds API)  │                          │ probability / statMath  │
 ├─────────────────┤                          └─────────────────────────┘
-│ nflverseProvider│ Next Gen Stats ─────────▶ no key needed, GitHub-hosted
+│ nflverseProvider│ Next Gen Stats + play- ─▶ no key needed, GitHub-hosted
+│ (nflverse)      │ by-play (EPA/success)     (feeds teamEpa.js + refereeTendencies.js)
+│                 │ + officiating crews
+├─────────────────┤
+│ injuryProvider  │ depth chart + injury ───▶ no key needed (feeds injuryImpact.js)
+│ (ESPN)          │ status per player
 ├─────────────────┤
 │ cfbdProvider    │ CFB stats/lines/talent ─▶ needs CFBD_API_KEY (see below)
 │ (collegefootballdata.com)
@@ -122,6 +127,91 @@ providers/            live data in                 analysis/                 rep
   or OAuth needed, and it's the one live-data source confirmed to work from
   this project's sandboxed dev environment when most sports-data APIs are
   network-blocked.
+- **EPA/play** (`teamEpa.js`, fed by `providers/nflverseProvider.js`'s
+  `fetchPbp`) — expected points added per play, the efficiency metric the
+  wider analytics community (nflfastR, PFF, modern Football Outsiders work)
+  treats as the strongest single per-play signal available, ahead of
+  points/yards-per-game, because it credits every play for the down/distance/
+  field-position situation it happened in rather than just its outcome.
+  Aggregated from nflverse's public play-by-play (already-computed `epa`/
+  `success` columns from nflfastR) into an offensive and defensive EPA/play +
+  success-rate split per team, scoped to completed games only
+  (`throughWeek`) so there's no lookahead into the week being projected. In
+  `matchupEngine.js` it's folded in as a third, independently-derived margin
+  estimate alongside the Elo-implied and efficiency(PPG)-implied margins
+  (35/35/30 weighting when available) rather than a small capped nudge like
+  the scheme/NGS adjustments — a deliberate choice reflecting how much more
+  predictive per-play EPA is than the drive-level stats the rest of the
+  engine is built on. Falls back cleanly to the pre-EPA two-way blend when
+  play-by-play isn't available yet (early season, or a fetch failure) — see
+  `weeklyUpdate.js`'s live-data path.
+- **Starter injuries** (`injuryImpact.js`, fed by `providers/injuryProvider.js`'s
+  `fetchTeamDepthChart`) — ESPN's public depth-chart endpoint is genuinely
+  rank-ordered per position with each athlete's current injury designation
+  attached, so this can assert "the starting QB is Out" instead of guessing
+  starter status from unordered roster data. **Scope, deliberately narrow**:
+  only a confirmed Out/Doubtful/Injured Reserve/PUP/Suspended starting QB
+  moves the projection — a flat, capped point subtraction (`QB_OUT_POINT_PENALTY`,
+  currently 3) reflecting the commonly-cited market effect of a backup QB
+  start, applied last so it isn't compounded by the multiplicative
+  adjustments above it. Every other position's real injury impact varies too
+  much by player/scheme to state a single honest number, so those surface as
+  informational notes only (`starterInjuryNotes`) — same posture as
+  `manualCoachNotes`, never silently reweights the model. A missing depth
+  chart (fetch failure, bye week) is treated as "no injury data," not an error.
+- **Referee-crew tendencies** (`refereeTendencies.js`, fed by
+  `providers/nflverseProvider.js`'s `fetchOfficials`) — how many penalties/
+  penalty yards a given head referee's games run relative to league average,
+  computed from real historical data (nflverse's officials archive, joined
+  to its play-by-play by the legacy GSIS game id). **Two scope limits,
+  stated plainly**: (1) informational note only, never a point/total
+  adjustment — penalty-rate effect size on scoring isn't established well
+  enough to state a confident point value the way the QB-out penalty is; (2)
+  this is a lookup against *past* games — the NFL doesn't announce which
+  crew works an upcoming game until a few days before kickoff, so there's no
+  way to know this week's assignment far in advance. Real use is a
+  near-kickoff manual check (once an assignment is known, e.g. from ESPN's
+  boxscore/summary endpoint) via the optional `referee: { name, penaltyRatio }`
+  param on `projectGame`, not a standard input the weekly pipeline
+  auto-populates like EPA or injuries.
+- **Line movement** (`lineMovement.js` + `lineHistoryStore.js`) — how much a
+  game's market spread/total has moved since this pipeline first saw it,
+  computed from snapshots this project takes of its own real market-line
+  pulls over time (`data/cache/line-history-{nfl,cfb}.json`, git-ignored
+  like the ratings cache). **Why self-collected, not a feed**: two realistic
+  free sources for "betting market signals" were checked directly against
+  this environment's network, not assumed — public bet-percentage/
+  sharp-vs-public-money splits (Action Network, Covers consensus) are both
+  blocked at the network level here, same pattern as the CFB scouting sites
+  documented above; The Odds API's own historical-odds endpoint (confirmed
+  reachable — a real key gets real data) is gated behind a paid plan, a cost
+  gate rather than a technical one. So this tracks it for free, going
+  forward — the real limitation that creates: there's no "movement since
+  Tuesday" on the very first run for a game, only once this pipeline has
+  actually observed it more than once. Surfaced as informational notes
+  (`describeMovement`, half a point of total movement or more) in both the
+  weekly NFL report and the CFB edge board — market context, not something
+  that feeds back into the model's own projection.
+- **Head-to-head / division ATS history** (`atsHistory.js`, fed live by
+  `cfbAtsHistory.js` and `nflHeadToHead.js`) — straight-up record, average
+  point differential, and (when spread data is available) against-the-spread
+  record between two specific teams or across a team's division/conference
+  rivals, built entirely from data this project already gathers elsewhere —
+  no new external source. **Real asymmetry between the two leagues, checked
+  directly**: CFBD's `/lines` returns real historical spreads for past
+  weeks/seasons (confirmed by direct use backtesting `cfbEdgeBoard.js`), so
+  `cfbAtsHistory.js` gets true ATS. NFL doesn't have a free equivalent —
+  ESPN's public boxscore/summary endpoint's `pickcenter`/`odds`/
+  `againstTheSpread` fields were checked against real completed games and
+  come back empty every time (it doesn't retain closing lines once a game's
+  over), and The Odds API's historical-odds endpoint is paid-tier only (same
+  finding as line movement, above). So `nflHeadToHead.js` is straight-up
+  only — real and useful, just not ATS. Verified live: correctly reproduced
+  the actual 2023-2025 Ohio State/Michigan results (including the real 2024
+  upset — Ohio State was a 20-point home favorite and lost outright) from
+  live CFBD data. Not part of the standard weekly pipeline (ESPN has no bulk
+  season-schedule endpoint, so NFL multi-season history costs 18 scoreboard
+  calls per season) — call it on demand, not on every refresh.
 - **Scheme tendencies** (`schemeTendencies.js`) — "coach scheme" signal
   derived *empirically* from each team's own play-calling data (tempo, pass
   rate, sack rates, 4th-down aggressiveness) relative to league average,

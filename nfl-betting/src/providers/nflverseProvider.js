@@ -11,12 +11,18 @@
 // There is no free public defensive-player tracking data (separation
 // allowed, coverage grades, etc.); that gap is real and stays undocumented
 // rather than faked — see positionMatchup.js.
+//
+// Also covers full play-by-play (fetchPbp — release tag "pbp"), the source
+// for team-level EPA/success-rate splits computed in src/analysis/teamEpa.js.
+// A season file is ~19MB gzipped / ~48k rows / 372 columns and takes several
+// seconds to parse — fine for a weekly batch job, not something to call from
+// a hot path or the test suite (teamEpa.js's tests use small fixture rows).
 
-const RELEASE_BASE = 'https://github.com/nflverse/nflverse-data/releases/download/nextgen_stats';
+const RELEASE_ROOT = 'https://github.com/nflverse/nflverse-data/releases/download';
 
-async function fetchGzippedCsv(filename) {
-  const res = await fetch(`${RELEASE_BASE}/${filename}`, { redirect: 'follow' });
-  if (!res.ok) throw new Error(`nflverse-data ${res.status} ${res.statusText} for ${filename}`);
+async function fetchGzippedCsv(releaseTag, filename) {
+  const res = await fetch(`${RELEASE_ROOT}/${releaseTag}/${filename}`, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`nflverse-data ${res.status} ${res.statusText} for ${releaseTag}/${filename}`);
   const buf = new Uint8Array(await res.arrayBuffer());
   const zlib = await import('node:zlib');
   const csv = zlib.gunzipSync(buf).toString('utf8');
@@ -77,12 +83,45 @@ const RUSHING_NUMERIC = ['season', 'week', 'efficiency', 'percent_attempts_gte_e
   'rush_attempts', 'rush_yards', 'expected_rush_yards', 'rush_yards_over_expected', 'avg_rush_yards',
   'rush_yards_over_expected_per_att', 'rush_pct_over_expected', 'rush_touchdowns'];
 
+const PBP_NUMERIC = ['week', 'down', 'epa', 'success', 'qb_epa', 'penalty', 'penalty_yards'];
+const OFFICIALS_NUMERIC = ['season', 'week', 'jersey_number'];
+
 export async function fetchNgsReceiving() {
-  return coerceNumeric(await fetchGzippedCsv('ngs_receiving.csv.gz'), RECEIVING_NUMERIC);
+  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_receiving.csv.gz'), RECEIVING_NUMERIC);
 }
 export async function fetchNgsPassing() {
-  return coerceNumeric(await fetchGzippedCsv('ngs_passing.csv.gz'), PASSING_NUMERIC);
+  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_passing.csv.gz'), PASSING_NUMERIC);
 }
 export async function fetchNgsRushing() {
-  return coerceNumeric(await fetchGzippedCsv('ngs_rushing.csv.gz'), RUSHING_NUMERIC);
+  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_rushing.csv.gz'), RUSHING_NUMERIC);
+}
+
+// Full play-by-play for one season — team abbreviations (posteam/defteam),
+// play_type, down, and nflfastR's precomputed epa/success columns are what
+// teamEpa.js needs; the other ~365 columns pass through unused but
+// unfiltered (cheaper to coerce five numeric fields than to hand-pick a
+// projection out of 372 column names that could drift release to release).
+export async function fetchPbp(season) {
+  return coerceNumeric(await fetchGzippedCsv('pbp', `play_by_play_${season}.csv.gz`), PBP_NUMERIC);
+}
+
+// Every officiating crew member for every game back to 2015 (release tag
+// "officials") — confirmed reachable the same way as the other nflverse
+// releases. One row per {game, official}; `position` includes 'Referee'
+// (the crew chief, whose name is what betting-market discussion of
+// "referee tendencies" actually refers to) plus every other on-field
+// position and a long tail of alternates. Joins to fetchPbp's rows via
+// `game_id` here == pbp's `old_game_id` (the legacy numeric GSIS id, not
+// pbp's own `game_id`, which is season_week_away_home-formatted) — see
+// analysis/refereeTendencies.js.
+//
+// Honest limit: this is a historical archive of who officiated PAST games,
+// not a schedule of upcoming crew assignments — the NFL doesn't announce
+// officiating crews until a few days before kickoff, so there's no way to
+// know which referee is working next week's game this far out. Real use is
+// a near-kickoff lookup once an assignment is known (e.g. from ESPN's
+// boxscore/summary endpoint once it's posted), not a standard input to the
+// week-ahead pipeline the other signals feed.
+export async function fetchOfficials() {
+  return coerceNumeric(await fetchGzippedCsv('officials', 'officials.csv.gz'), OFFICIALS_NUMERIC);
 }

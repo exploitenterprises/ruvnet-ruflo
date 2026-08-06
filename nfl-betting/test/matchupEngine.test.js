@@ -72,3 +72,110 @@ test('a dominant offense against a weak defense projects well above league avera
   });
   assert.ok(proj.projectedHomeScore > leagueAvg.pointsPerGame);
 });
+
+test('omitting epaSplits leaves the projection identical to the pre-EPA two-way blend', () => {
+  const args = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1520 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1480 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  const withoutEpaKey = projectGame(args);
+  const withEmptyEpaSplits = projectGame({ ...args, epaSplits: {} });
+  assert.equal(withoutEpaKey.projectedSpread, withEmptyEpaSplits.projectedSpread);
+});
+
+test('a large EPA/play edge shifts the projected spread toward the more efficient team', () => {
+  const base = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  const withoutEpa = projectGame(base);
+  const withEpa = projectGame({
+    ...base,
+    epaSplits: {
+      home: { offEpaPerPlay: 0.2, defEpaPerPlay: -0.1 }, // strong offense, strong defense
+      away: { offEpaPerPlay: -0.1, defEpaPerPlay: 0.1 }, // weak offense, weak defense
+    },
+  });
+  assert.ok(withEpa.projectedSpread > withoutEpa.projectedSpread);
+  assert.ok(withEpa.schemeNotes.some((n) => n.includes('A') && n.toLowerCase().includes('efficiency')));
+});
+
+test('a one-sided epaSplits object (only one team supplied) is treated as no data, not a crash', () => {
+  const proj = projectGame({
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+    epaSplits: { home: { offEpaPerPlay: 0.2, defEpaPerPlay: -0.1 } },
+  });
+  assert.ok(Number.isFinite(proj.projectedSpread));
+});
+
+function depthChartWithQbOut(status = 'Out') {
+  return [{ name: '3WR 1TE', positions: { qb: { athletes: [{ id: '1', displayName: 'Backup-Bound Starter', injuries: [{ status, note: 'ankle' }] }] } } }];
+}
+
+test('a confirmed Out starting QB docks that team\'s projection and drops a note', () => {
+  const base = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  const healthy = projectGame(base);
+  const homeQbOut = projectGame({ ...base, injuries: { home: depthChartWithQbOut() } });
+  assert.ok(homeQbOut.projectedHomeScore < healthy.projectedHomeScore);
+  assert.ok(homeQbOut.projectedSpread < healthy.projectedSpread);
+  assert.ok(homeQbOut.schemeNotes.some((n) => n.includes('starting QB') && n.includes('docked')));
+});
+
+test('a Questionable-only QB (not Out/Doubtful/IR) does not move the projection', () => {
+  const base = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  const healthy = projectGame(base);
+  const questionable = projectGame({ ...base, injuries: { home: depthChartWithQbOut('Questionable') } });
+  assert.equal(healthy.projectedSpread, questionable.projectedSpread);
+});
+
+test('omitting injuries entirely behaves exactly like an empty injuries object', () => {
+  const args = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  assert.equal(projectGame(args).projectedSpread, projectGame({ ...args, injuries: {} }).projectedSpread);
+});
+
+test('a flag-happy referee adds an informational note but never moves the projection', () => {
+  const base = {
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+  };
+  const noReferee = projectGame(base);
+  const withReferee = projectGame({ ...base, referee: { name: 'Test Ref', penaltyRatio: 1.25 } });
+  assert.equal(noReferee.projectedSpread, withReferee.projectedSpread);
+  assert.equal(noReferee.projectedTotal, withReferee.projectedTotal);
+  assert.ok(withReferee.schemeNotes.some((n) => n.includes('Test Ref') && n.includes('penalties')));
+});
+
+test('a referee near league average (ratio close to 1) adds no note', () => {
+  const proj = projectGame({
+    home: { abbr: 'A', stats: makeStats(), rating: 1500 },
+    away: { abbr: 'B', stats: makeStats(), rating: 1500 },
+    leagueAvg,
+    weather: { isDome: true },
+    referee: { name: 'Average Ref', penaltyRatio: 1.02 },
+  });
+  assert.ok(!proj.schemeNotes.some((n) => n.includes('Average Ref')));
+});

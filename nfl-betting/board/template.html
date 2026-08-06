@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Red Hot Locks</title>
 <style>
   @font-face { font-family: 'Erica One'; src: url(data:font/ttf;base64,{{FONT_ERICAONE_REG}}) format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
@@ -142,7 +143,7 @@
 
   .live-chip {
     display: inline-flex; align-items: center; gap: 6px;
-    font-family: 'Red Hat Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    font-family: 'Red Hat Mono', monospace; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase;
     background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16);
     padding: 5px 10px 5px 8px; border-radius: 999px; color: #dfe3ee;
   }
@@ -155,25 +156,25 @@
   @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
 
   .hero h1 { font-size: 40px; margin: 20px 0 6px; position: relative; z-index: 1; }
-  .hero .sub { font-family: 'Outfit'; font-size: 15px; color: #c3c9dc; max-width: 46ch; margin: 0; position: relative; z-index: 1; }
+  .hero .sub { font-family: 'Outfit'; font-size: 17.5px; color: #c3c9dc; max-width: 46ch; margin: 0; position: relative; z-index: 1; }
 
   .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; position: relative; z-index: 1; }
   .meta-chip {
-    font-family: 'Red Hat Mono', monospace; font-size: 11px; letter-spacing: 0.03em;
+    font-family: 'Red Hat Mono', monospace; font-size: 14px; letter-spacing: 0.03em;
     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: #dfe3ee;
     padding: 6px 10px; border-radius: 7px;
   }
   .meta-chip b { color: var(--accent); font-weight: 700; }
 
   /* ---------- Sections ---------- */
-  section { padding: 30px 22px 4px; }
+  section { padding: 38px 22px 8px; }
   .eyebrow {
-    font-family: 'Red Hat Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-family: 'Red Hat Mono', monospace; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--accent-2); margin: 0 0 4px;
   }
-  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
   .section-head h2 { font-size: 24px; margin: 0; color: var(--text); }
-  .section-head p { margin: 4px 0 0; color: var(--text-dim); font-size: 13.5px; max-width: 46ch; }
+  .section-head p { margin: 4px 0 0; color: var(--text-dim); font-size: 16.5px; max-width: 46ch; }
 
   /* ---------- SB rail ---------- */
   .rail { display: flex; gap: 12px; overflow-x: auto; padding: 4px 22px 14px; margin: 0 -22px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
@@ -188,7 +189,7 @@
     padding: 14px 12px;
     position: relative;
   }
-  .sb-card .rank { position: absolute; top: 10px; right: 10px; font-family: 'Red Hat Mono'; font-size: 10px; color: var(--text-dim); }
+  .sb-card .rank { position: absolute; top: 10px; right: 10px; font-family: 'Red Hat Mono'; font-size: 12.5px; color: var(--text-dim); }
   .sb-card .team { font-family: 'Erica One'; font-weight: 400; font-size: 19px; text-transform: uppercase; margin: 4px 0 10px; line-height: 1.05; display: flex; align-items: center; gap: 7px; }
 
   /* ---------- Team badges & player avatars ----------
@@ -199,99 +200,99 @@
   .team-badge {
     display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
     width: 22px; height: 22px; border-radius: 50%; font-family: 'Red Hat Mono'; font-weight: 700;
-    font-size: 8.5px; letter-spacing: -0.02em; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+    font-size: 10px; letter-spacing: -0.02em; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.25);
     box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.25), 0 1px 3px rgba(0,0,0,0.3);
   }
-  .div-card .who .team-badge, .wire-item .team-badge { width: 17px; height: 17px; font-size: 7px; margin-right: 2px; }
-  .pick-card .matchup .team-badge { width: 24px; height: 24px; font-size: 9px; }
-  .value-card .team .team-badge { width: 19px; height: 19px; font-size: 7.5px; }
+  .div-card .who .team-badge, .wire-item .team-badge { width: 17px; height: 17px; font-size: 8.5px; margin-right: 2px; }
+  .pick-card .matchup .team-badge { width: 24px; height: 24px; font-size: 11px; }
+  .value-card .team .team-badge { width: 19px; height: 19px; font-size: 9px; }
 
   .player-avatar {
     display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
     width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); border: 1.5px solid var(--line);
-    font-family: 'Red Hat Mono'; font-weight: 700; font-size: 9px; color: var(--text-dim); position: relative; overflow: hidden;
+    font-family: 'Red Hat Mono'; font-weight: 700; font-size: 11px; color: var(--text-dim); position: relative; overflow: hidden;
   }
   .player-avatar svg { width: 60%; height: 60%; opacity: 0.55; }
   .sb-card .odds { font-family: 'Red Hat Mono'; font-weight: 700; font-size: 22px; color: var(--accent); }
-  .sb-card .implied { font-family: 'Red Hat Mono'; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-  .sb-card .tag { font-size: 10.5px; color: var(--text-dim); margin-top: 8px; letter-spacing: 0.02em; }
+  .sb-card .implied { font-family: 'Red Hat Mono'; font-size: 14px; color: var(--text-dim); margin-top: 2px; }
+  .sb-card .tag { font-size: 13px; color: var(--text-dim); margin-top: 8px; letter-spacing: 0.02em; }
 
   /* ---------- Value board ---------- */
-  .value-list { display: flex; flex-direction: column; gap: 10px; }
+  .value-list { display: flex; flex-direction: column; gap: 14px; }
   .value-card {
     display: grid; grid-template-columns: 3px 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
   }
   .value-card .stripe { background: linear-gradient(180deg, var(--accent), var(--accent-2)); }
-  .value-card .body { padding: 14px 16px; }
+  .value-card .body { padding: 18px 20px; }
   .value-card .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .value-card .team { font-family: 'Erica One'; font-weight: 400; font-size: 21px; text-transform: uppercase; }
-  .value-card .market { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-left: 8px; }
+  .value-card .market { font-size: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-left: 8px; }
   .price-block { text-align: right; }
   .price-block .odds { font-family: 'Red Hat Mono'; font-weight: 700; font-size: 20px; color: var(--text); }
-  .price-block .implied { font-family: 'Red Hat Mono'; font-size: 10.5px; color: var(--text-dim); }
-  .value-card p.why { margin: 8px 0 0; font-size: 13.5px; color: var(--text-dim); line-height: 1.5; }
-  .flames { font-size: 13px; letter-spacing: 1px; margin-top: 8px; display: inline-block; }
+  .price-block .implied { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text-dim); }
+  .value-card p.why { margin: 8px 0 0; font-size: 16.5px; color: var(--text-dim); line-height: 1.5; }
+  .flames { font-size: 16px; letter-spacing: 1px; margin-top: 8px; display: inline-block; }
 
   /* ---------- Division grid ---------- */
   .div-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   @media (max-width: 480px) { .div-grid { grid-template-columns: 1fr; } }
-  .div-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; }
-  .div-card .div-name { font-family: 'Red Hat Mono'; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+  .div-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 17px 18px; }
+  .div-card .div-name { font-family: 'Red Hat Mono'; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
-  .row .who { font-size: 14px; font-weight: 700; }
-  .row .price { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text); }
-  .pill { font-family: 'Red Hat Mono'; font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; }
+  .row .who { font-size: 16.5px; font-weight: 700; }
+  .row .price { font-family: 'Red Hat Mono'; font-size: 16px; color: var(--text); }
+  .pill { font-family: 'Red Hat Mono'; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; }
   .pill.fav { background: var(--surface-3); color: var(--text-dim); }
   .pill.value { background: var(--good-bg); color: var(--good); }
   .pill.pick { background: var(--accent); color: #fff; font-weight: 700; }
   .cfb-theme .pill.pick { background: var(--accent-cfb); }
   .div-card.our-pick { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
   .cfb-theme .div-card.our-pick { border-color: color-mix(in srgb, var(--accent-cfb) 45%, var(--line)); background: color-mix(in srgb, var(--accent-cfb) 6%, var(--surface)); }
-  .div-card .angle { margin: 9px 0 0; font-size: 12.5px; color: var(--text-dim); line-height: 1.45; padding-top: 8px; border-top: 1px dashed var(--line); }
+  .div-card .angle { margin: 9px 0 0; font-size: 15.5px; color: var(--text-dim); line-height: 1.45; padding-top: 8px; border-top: 1px dashed var(--line); }
 
   /* ---------- Rail "our pick" badge ---------- */
   .sb-card.our-pick { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
   .cfb-theme .sb-card.our-pick { border-color: var(--accent-cfb); background: color-mix(in srgb, var(--accent-cfb) 8%, var(--surface)); }
-  .sb-card .pick-badge { position: absolute; top: 10px; right: 10px; font-family: 'Red Hat Mono'; font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--accent); color: #fff; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
+  .sb-card .pick-badge { position: absolute; top: 10px; right: 10px; font-family: 'Red Hat Mono'; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--accent); color: #fff; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
   .cfb-theme .sb-card .pick-badge { background: var(--accent-cfb); }
 
   /* ---------- Methodology / footer ---------- */
   .info-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 4px; }
-  .info-card h3 { font-size: 16px; margin: 0 0 8px; }
-  .info-card p, .info-card li { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .info-card h3 { font-size: 18px; margin: 0 0 8px; }
+  .info-card p, .info-card li { font-size: 16px; color: var(--text-dim); line-height: 1.6; }
   .info-card ul { margin: 6px 0; padding-left: 18px; }
-  .cadence-strip { display: flex; gap: 8px; margin: 12px 0; }
-  .cadence-day { flex: 1; text-align: center; padding: 8px 4px; border-radius: 7px; background: var(--surface-2); border: 1px solid var(--line); }
+  .cadence-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .cadence-day { flex: 1 1 calc(25% - 6px); min-width: 64px; text-align: center; padding: 8px 4px; border-radius: 7px; background: var(--surface-2); border: 1px solid var(--line); }
   .cadence-day.active { background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-  .cadence-day .d { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; color: var(--text-dim); text-transform: uppercase; }
-  .cadence-day .t { font-family: 'Red Hat Mono'; font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .cadence-day .d { font-family: 'Red Hat Mono'; font-size: 12.5px; letter-spacing: 0.06em; color: var(--text-dim); text-transform: uppercase; }
+  .cadence-day .t { font-family: 'Red Hat Mono'; font-size: 15px; font-weight: 700; margin-top: 2px; }
   .cadence-day.active .t { color: var(--accent); }
 
-  .disclaimer { font-size: 11.5px; color: var(--text-dim); border-top: 1px solid var(--line); margin-top: 18px; padding-top: 12px; line-height: 1.6; }
+  .disclaimer { font-size: 14.5px; color: var(--text-dim); border-top: 1px solid var(--line); margin-top: 18px; padding-top: 12px; line-height: 1.6; }
   .sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .sources a { font-family: 'Red Hat Mono'; font-size: 10.5px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; text-decoration: none; }
+  .sources a { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; text-decoration: none; }
   .sources a:hover { color: var(--accent-2); border-color: var(--accent-2); }
 
-  footer.appfoot { text-align: center; padding: 22px 22px 0; color: var(--text-dim); font-family: 'Red Hat Mono'; font-size: 11px; letter-spacing: 0.04em; }
+  footer.appfoot { text-align: center; padding: 22px 22px 0; color: var(--text-dim); font-family: 'Red Hat Mono'; font-size: 14px; letter-spacing: 0.04em; }
 
   /* ---------- Transaction wire ---------- */
   .wire { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
-  .wire-item { display: grid; grid-template-columns: 64px 1fr; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .wire-item { display: grid; grid-template-columns: 68px 1fr; gap: 14px; padding: 16px 18px; border-bottom: 1px solid var(--line); align-items: baseline; }
   .wire-item:last-child { border-bottom: none; }
-  .wire-tag { font-family: 'Red Hat Mono'; font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; text-align: center; height: fit-content; }
+  .wire-tag { font-family: 'Red Hat Mono'; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; text-align: center; height: fit-content; }
   .wire-tag.trade { background: color-mix(in srgb, var(--violet) 20%, var(--surface-3)); color: var(--violet); }
   .wire-tag.signed { background: var(--good-bg); color: var(--good); }
   .wire-tag.hired { background: color-mix(in srgb, var(--accent-2) 24%, var(--surface-3)); color: var(--accent-2); }
   .wire-tag.fired { background: var(--bad-bg); color: var(--bad); }
   .wire-tag.portal { background: color-mix(in srgb, var(--accent-cfb) 20%, var(--surface-3)); color: var(--accent-cfb); }
-  .wire-item p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+  .wire-item p { margin: 0; font-size: 16.5px; line-height: 1.5; }
   .wire-item p b { color: var(--text); }
 
   /* ---------- Weekly picks ---------- */
-  .pick-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+  .pick-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px; }
   .pick-card .matchup-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .pick-card .matchup { font-family: 'Erica One'; font-weight: 400; font-size: 21px; text-transform: uppercase; }
-  .pick-card .when { font-family: 'Red Hat Mono'; font-size: 11px; color: var(--text-dim); }
+  .pick-card .when { font-family: 'Red Hat Mono'; font-size: 14px; color: var(--text-dim); }
 
   /* The spread is the primary weekly signal — boxed and colored so it reads
      first. Moneyline only appears when the model has real separation from
@@ -305,69 +306,101 @@
     background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
     border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
   }
-  .spread-block .lbl { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .spread-block .lbl { font-family: 'Red Hat Mono'; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
   .spread-block .call { font-family: 'Erica One'; font-size: 19px; text-transform: uppercase; color: var(--accent); margin-top: 2px; }
   .spread-block .price-col { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-  .spread-block .price { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text); }
+  .spread-block .price { font-family: 'Red Hat Mono'; font-size: 16px; color: var(--text); }
 
   /* Conviction-scaled stake size (1-5 units), shown on every committed pick
      — see nfl-betting/README.md#units. Dots fill left-to-right so 5u reads
      as a stronger call than 1u at a glance, not just a bigger number. */
-  .unit-badge { display: inline-flex; align-items: center; gap: 5px; font-family: 'Red Hat Mono'; font-size: 10.5px; color: var(--text-dim); flex: 0 0 auto; }
+  .unit-badge { display: inline-flex; align-items: center; gap: 5px; font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text-dim); flex: 0 0 auto; }
   .unit-badge .dots { display: inline-flex; gap: 2px; }
   .unit-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
   .unit-badge .dot.filled { background: var(--accent); }
   .cfb-theme .unit-badge .dot.filled { background: var(--accent-cfb); }
 
   .pick-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
-  .pick-line .market-name { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-  .pick-line .call { font-weight: 700; font-size: 14.5px; }
+  .pick-line .market-name { font-size: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  .pick-line .call { font-weight: 700; font-size: 17px; }
   .pick-line .call.good { color: var(--good); }
-  .pick-line .price { font-family: 'Red Hat Mono'; font-size: 13px; color: var(--text); }
+  .pick-line .price { font-family: 'Red Hat Mono'; font-size: 16px; color: var(--text); }
   .ml-callout { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; border-radius: 7px; background: var(--good-bg); }
-  .ml-callout .badge { font-family: 'Red Hat Mono'; font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--good); color: var(--surface); padding: 2px 7px; border-radius: 999px; flex: 0 0 auto; }
-  .ml-callout .call { font-weight: 700; font-size: 13.5px; color: var(--good); }
-  .ml-callout .price { font-family: 'Red Hat Mono'; font-size: 12.5px; color: var(--text-dim); margin-left: auto; }
-  .pick-card p.reasoning { margin: 10px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.55; }
-  .props-note { background: var(--surface-2); border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: 12.5px; color: var(--text-dim); line-height: 1.55; }
+  .ml-callout .badge { font-family: 'Red Hat Mono'; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; background: var(--good); color: var(--surface); padding: 2px 7px; border-radius: 999px; flex: 0 0 auto; }
+  .ml-callout .call { font-weight: 700; font-size: 16.5px; color: var(--good); }
+  .ml-callout .price { font-family: 'Red Hat Mono'; font-size: 15.5px; color: var(--text-dim); margin-left: auto; }
+  .pick-card p.reasoning { margin: 10px 0 0; font-size: 16px; color: var(--text-dim); line-height: 1.55; }
+  .props-note { background: var(--surface-2); border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: 15.5px; color: var(--text-dim); line-height: 1.55; }
   .props-note b { color: var(--text); }
 
   /* ---------- Track record ---------- */
   .record-band { padding: 18px 22px 4px; }
 
   /* ---------- Page tabs ---------- */
-  .tab-input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
-  .tab-switch { display: flex; gap: 8px; padding: 18px 22px 0; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
-  .tab-switch::-webkit-scrollbar { display: none; }
-  .tab-btn {
-    flex: 0 0 auto; text-align: center; padding: 11px 16px; border-radius: 999px; border: 1px solid var(--line);
-    background: var(--surface); font-family: 'Erica One', system-ui, sans-serif; text-transform: uppercase;
-    font-size: 12px; letter-spacing: 0.03em; white-space: nowrap; cursor: pointer; color: var(--text-dim);
-    transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s cubic-bezier(.34,1.56,.64,1);
+  .tab-input, .menu-toggle-input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+
+  /* ---------- Section menu (replaces the old horizontal scrolling tab strip) ---------- */
+  .menu-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px;
+    border: 1px solid rgba(241,243,248,0.35); background: rgba(241,243,248,0.08); color: inherit;
+    font-family: 'Red Hat Mono', monospace; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .tab-btn:hover { transform: translateY(-2px); }
-  .tab-btn:active { transform: translateY(0) scale(0.97); }
-  #tab-nfl-futures:checked ~ .tab-switch label[for="tab-nfl-futures"],
-  #tab-nfl-props:checked ~ .tab-switch label[for="tab-nfl-props"],
-  #tab-nfl-games:checked ~ .tab-switch label[for="tab-nfl-games"] {
-    background: color-mix(in srgb, var(--accent) 16%, var(--surface)); border-color: var(--accent); color: var(--accent);
+  .menu-btn-bars { display: inline-flex; flex-direction: column; gap: 3px; width: 16px; }
+  .menu-btn-bars span { display: block; height: 2px; border-radius: 2px; background: currentColor; }
+  .menu-btn-bars span:nth-child(2) { width: 70%; }
+
+  .menu-overlay-bg {
+    position: fixed; inset: 0; background: rgba(5,6,10,0.55); opacity: 0; pointer-events: none;
+    transition: opacity .22s ease; z-index: 45; cursor: pointer;
   }
-  #tab-cfb-futures:checked ~ .tab-switch label[for="tab-cfb-futures"],
-  #tab-cfb-games:checked ~ .tab-switch label[for="tab-cfb-games"] {
-    background: color-mix(in srgb, var(--accent-cfb) 16%, var(--surface)); border-color: var(--accent-cfb); color: var(--accent-cfb);
+  #menu-toggle:checked ~ .menu-overlay-bg { opacity: 1; pointer-events: auto; }
+
+  .menu-panel {
+    position: fixed; top: 0; left: 0; right: 0; max-width: 760px; margin: 0 auto; z-index: 46;
+    background: var(--surface); border-bottom: 1px solid var(--line); border-radius: 0 0 16px 16px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.28); max-height: 88vh; overflow-y: auto;
+    transform: translateY(-105%); transition: transform .3s cubic-bezier(.4,0,.2,1);
   }
-  #tab-nfl-futures:focus-visible ~ .tab-switch label[for="tab-nfl-futures"],
-  #tab-nfl-props:focus-visible ~ .tab-switch label[for="tab-nfl-props"],
-  #tab-nfl-games:focus-visible ~ .tab-switch label[for="tab-nfl-games"],
-  #tab-cfb-futures:focus-visible ~ .tab-switch label[for="tab-cfb-futures"],
-  #tab-cfb-games:focus-visible ~ .tab-switch label[for="tab-cfb-games"] { outline: 2px solid var(--text); outline-offset: 2px; }
+  #menu-toggle:checked ~ .menu-panel { transform: translateY(0); }
+  .menu-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+  .menu-panel-head span { font-family: 'Erica One'; text-transform: uppercase; font-size: 15px; letter-spacing: 0.03em; color: var(--text-dim); }
+  .menu-close { font-size: 20px; line-height: 1; cursor: pointer; color: var(--text-dim); padding: 4px 8px; }
+  .menu-section-label {
+    padding: 14px 20px 6px; font-family: 'Red Hat Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px; padding: 16px 20px; font-size: 17px; cursor: pointer;
+    border-top: 1px solid var(--line); color: var(--text); -webkit-tap-highlight-color: transparent;
+  }
+  .menu-panel-head + .menu-item, .menu-section-label + .menu-item { border-top: none; }
+  .menu-item-icon { font-size: 19px; width: 24px; text-align: center; flex: 0 0 auto; }
+  .menu-item:active { background: var(--surface-2); }
+
+  #tab-home:checked ~ .menu-panel .menu-item[for="tab-home"],
+  #tab-nfl-futures:checked ~ .menu-panel .menu-item[for="tab-nfl-futures"],
+  #tab-nfl-props:checked ~ .menu-panel .menu-item[for="tab-nfl-props"],
+  #tab-nfl-games:checked ~ .menu-panel .menu-item[for="tab-nfl-games"],
+  #tab-nfl-edge:checked ~ .menu-panel .menu-item[for="tab-nfl-edge"] {
+    background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); font-weight: 700;
+  }
+  #tab-cfb-futures:checked ~ .menu-panel .menu-item[for="tab-cfb-futures"],
+  #tab-cfb-games:checked ~ .menu-panel .menu-item[for="tab-cfb-games"],
+  #tab-cfb-edge:checked ~ .menu-panel .menu-item[for="tab-cfb-edge"] {
+    background: color-mix(in srgb, var(--accent-cfb) 14%, var(--surface)); color: var(--accent-cfb); font-weight: 700;
+  }
+  .menu-item:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
 
   .panel { display: none; }
+  #tab-home:checked ~ .panel-home { display: block; }
   #tab-nfl-futures:checked ~ .panel-nfl-futures { display: block; }
   #tab-nfl-props:checked ~ .panel-nfl-props { display: block; }
   #tab-nfl-games:checked ~ .panel-nfl-games { display: block; }
+  #tab-nfl-edge:checked ~ .panel-nfl-edge { display: block; }
   #tab-cfb-futures:checked ~ .panel-cfb-futures { display: block; }
   #tab-cfb-games:checked ~ .panel-cfb-games { display: block; }
+  #tab-cfb-edge:checked ~ .panel-cfb-edge { display: block; }
 
   .cfb-theme .eyebrow { color: var(--accent-cfb-2); }
   .cfb-theme .value-card .stripe { background: linear-gradient(180deg, var(--accent-cfb), var(--accent-cfb-2)); }
@@ -380,7 +413,7 @@
   .empty-state { text-align: center; padding: 46px 24px; border: 1px dashed var(--line); border-radius: var(--radius); background: var(--surface); }
   .empty-state .icon { font-size: 30px; }
   .empty-state h3 { font-size: 18px; margin: 12px 0 6px; }
-  .empty-state p { font-size: 13.5px; color: var(--text-dim); max-width: 42ch; margin: 0 auto; line-height: 1.6; }
+  .empty-state p { font-size: 16.5px; color: var(--text-dim); max-width: 42ch; margin: 0 auto; line-height: 1.6; }
 
   /* ---------- Motion system (reveal-on-scroll, hover, count-up) ---------- */
   .reveal { opacity: 0; transform: translateY(20px); transition: opacity .55s cubic-bezier(.16,1,.3,1), transform .55s cubic-bezier(.16,1,.3,1); }
@@ -411,20 +444,19 @@
     .flame-anim { animation: none; }
     .hero-shimmer { display: none; }
     .panel-snap { animation: none; }
-    .tab-btn { transition: none; }
-    .tab-btn:hover { transform: none; }
+    .menu-panel, .menu-overlay-bg { transition: none; }
   }
   .record-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   @media (max-width: 480px) { .record-strip { grid-template-columns: repeat(2, 1fr); } }
   .record-tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 10px; text-align: center; }
-  .record-tile .lbl { font-family: 'Red Hat Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .record-tile .lbl { font-family: 'Red Hat Mono'; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
   .record-tile .score { font-family: 'Erica One'; font-weight: 400; font-size: 26px; margin-top: 4px; }
-  .record-tile .pct { font-family: 'Red Hat Mono'; font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .record-tile .pct { font-family: 'Red Hat Mono'; font-size: 14px; color: var(--text-dim); margin-top: 1px; }
   .streak-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
-  .streak-badge { font-family: 'Red Hat Mono'; font-weight: 700; font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--surface-3); color: var(--text-dim); }
-  .streak-row p { margin: 0; font-size: 12.5px; color: var(--text-dim); }
+  .streak-badge { font-family: 'Red Hat Mono'; font-weight: 700; font-size: 15px; padding: 3px 9px; border-radius: 999px; background: var(--surface-3); color: var(--text-dim); }
+  .streak-row p { margin: 0; font-size: 15.5px; color: var(--text-dim); }
   .hot-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .hot-chip { font-family: 'Red Hat Mono'; font-size: 11px; background: var(--good-bg); color: var(--good); padding: 4px 9px; border-radius: 999px; }
+  .hot-chip { font-family: 'Red Hat Mono'; font-size: 14px; background: var(--good-bg); color: var(--good); padding: 4px 9px; border-radius: 999px; }
 </style>
 
 <svg style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
@@ -524,6 +556,7 @@
 
   <header class="hero">
     <div class="brand-row">
+      <label for="menu-toggle" class="menu-btn" aria-label="Open section menu"><span class="menu-btn-bars"><span></span><span></span><span></span></span>Menu</label>
       <div class="brand">
         <svg class="mark" viewBox="0 0 200 220" role="img" aria-label="Red Hot Locks logo: a chili pepper throwing a football"><use href="#chili-mascot"></use></svg>
         <span class="name">Red <em>Hot</em> Locks</span>
@@ -557,17 +590,128 @@
     </div>
   </div>
 
-  <input type="radio" name="tabs" id="tab-nfl-futures" class="tab-input" checked>
+  <input type="radio" name="tabs" id="tab-home" class="tab-input" checked>
+  <input type="radio" name="tabs" id="tab-nfl-futures" class="tab-input">
   <input type="radio" name="tabs" id="tab-nfl-props" class="tab-input">
   <input type="radio" name="tabs" id="tab-nfl-games" class="tab-input">
+  <input type="radio" name="tabs" id="tab-nfl-edge" class="tab-input">
   <input type="radio" name="tabs" id="tab-cfb-futures" class="tab-input">
   <input type="radio" name="tabs" id="tab-cfb-games" class="tab-input">
-  <div class="tab-switch">
-    <label for="tab-nfl-futures" class="tab-btn">🏈 NFL Futures</label>
-    <label for="tab-nfl-props" class="tab-btn">🎯 NFL Props</label>
-    <label for="tab-nfl-games" class="tab-btn">📋 NFL Picks</label>
-    <label for="tab-cfb-futures" class="tab-btn">🎓 CFB Futures</label>
-    <label for="tab-cfb-games" class="tab-btn">📋 CFB Picks</label>
+  <input type="radio" name="tabs" id="tab-cfb-edge" class="tab-input">
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="menu-overlay-bg" aria-hidden="true"></label>
+  <nav class="menu-panel" aria-label="Section menu">
+    <div class="menu-panel-head">
+      <span>Sections</span>
+      <label for="menu-toggle" class="menu-close" aria-label="Close menu">✕</label>
+    </div>
+    <label for="tab-home" class="menu-item"><span class="menu-item-icon">🏠</span>Home</label>
+    <div class="menu-section-label">NFL</div>
+    <label for="tab-nfl-futures" class="menu-item"><span class="menu-item-icon">🏈</span>Futures</label>
+    <label for="tab-nfl-props" class="menu-item"><span class="menu-item-icon">🎯</span>Props</label>
+    <label for="tab-nfl-games" class="menu-item"><span class="menu-item-icon">📋</span>Picks</label>
+    <label for="tab-nfl-edge" class="menu-item"><span class="menu-item-icon">📐</span>Edge Board</label>
+    <div class="menu-section-label">College Football</div>
+    <label for="tab-cfb-futures" class="menu-item"><span class="menu-item-icon">🎓</span>Futures</label>
+    <label for="tab-cfb-games" class="menu-item"><span class="menu-item-icon">📋</span>Picks</label>
+    <label for="tab-cfb-edge" class="menu-item"><span class="menu-item-icon">📐</span>Edge Board</label>
+  </nav>
+
+  <div class="panel panel-home">
+
+  <section>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Home</p>
+        <h2>Today's Rundown</h2>
+        <p>The highlights across every section — full detail lives in each one. Tap <b>Menu</b> above to jump straight to a section.</p>
+      </div>
+    </div>
+
+    <p class="eyebrow" style="margin-top:4px;">🔥 Futures We Like</p>
+    <div class="value-list" style="margin-bottom: 26px;">
+      <div class="value-card">
+        <div class="stripe"></div>
+        <div class="body">
+          <div class="top"><span class="team" data-team="DEN">Broncos</span><span class="market">Super Bowl</span></div>
+          <p class="why">Top-tier defense + Bo Nix, priced like a fringe contender — full case in NFL Futures.</p>
+        </div>
+      </div>
+      <div class="value-card">
+        <div class="stripe"></div>
+        <div class="body">
+          <div class="top"><span class="team" data-team="BUF">Josh Allen</span><span class="market">MVP · +600</span></div>
+          <p class="why">Best QB on the team we'd bet to be the AFC's most complete roster.</p>
+        </div>
+      </div>
+      <div class="cfb-theme">
+        <div class="value-card">
+          <div class="stripe"></div>
+          <div class="body">
+            <div class="top"><span class="team" data-team="LSU">LSU</span><span class="market">National Championship</span></div>
+            <p class="why">Kiffin hire + two portal headliners (Leavitt, Seaton) in one cycle — priced behind the actual firepower added.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="eyebrow">📋 Picks of the Week</p>
+    <div class="pick-card" style="margin-bottom: 26px;">
+      <div class="matchup-row">
+        <span class="matchup"><span data-team="CAR">Panthers</span> @ <span data-team="ARI">Cardinals</span></span>
+        <span class="when">NFL · Hall of Fame Game · Thu Aug 6</span>
+      </div>
+      <div class="spread-block">
+        <div><div class="lbl">Our Pick</div><div class="call">Lean Under 36.5</div></div>
+        <div class="price-col"><span class="price num">No spread play</span></div>
+      </div>
+      <p class="reasoning">Honest pass on the spread (see NFL Picks for why) — the one real lean is the total.</p>
+    </div>
+    <div class="cfb-theme">
+      <div class="pick-card" style="margin-bottom: 8px;">
+        <div class="matchup-row">
+          <span class="matchup"><span data-team="SJSU">San Jose State</span> @ <span data-team="USC">USC</span></span>
+          <span class="when">CFB · Week 0 · Sat Aug 29</span>
+        </div>
+        <div class="spread-block">
+          <div><div class="lbl">Our Pick</div><div class="call">No play, taking the number as-is</div></div>
+          <div class="price-col"><span class="price num">USC -35.5</span></div>
+        </div>
+        <p class="reasoning">A -50000 moneyline is the book taking the game off the board — market snapshot, not a lean. Full detail in CFB Picks.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top: 8px;">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">🩹 Injuries to Watch</p>
+        <h2>Nothing Game-Relevant Yet</h2>
+      </div>
+    </div>
+    <div class="empty-state">
+      <div class="icon">🩹</div>
+      <h3>Camp injuries populate here once real snaps are on tape</h3>
+      <p>The starter-injury pipeline is live and real (ESPN depth charts, confirmed Out/Doubtful/IR designations — see <span class="num">injuryImpact.js</span>), but there's nothing game-relevant to flag before real football starts. Once the season's underway, a confirmed starting-QB injury shows up here first.</p>
+    </div>
+  </section>
+
+  <section style="padding-top: 8px;">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">📰 Latest Wire</p>
+        <h2>What Moved</h2>
+      </div>
+    </div>
+    <div class="wire">
+      <div class="wire-item"><span class="wire-tag trade">Trade</span><p><b>WR Jaylen Waddle</b> MIA → DEN for a 1st, a 3rd, and a 4th-round swap — the centerpiece move behind Denver's Super Bowl sleeper case.</p></div>
+      <div class="wire-item"><span class="wire-tag fired">Fired</span><p><b>Sean McDermott</b> out in Buffalo after nine seasons — Bills promote OC <b>Joe Brady</b> to head coach.</p></div>
+      <div class="wire-item"><span class="wire-tag portal">Portal</span><p><b>QB Sam Leavitt</b> Arizona State → LSU — portal's top-rated player, went 16-4 as a starter and led ASU to a Big 12 title and CFP berth.</p></div>
+    </div>
+    <p style="font-size: 15.5px; color:var(--text-dim); margin-top:10px;">Full wire in NFL Futures and CFB Futures.</p>
+  </section>
+
   </div>
 
   <div class="panel panel-nfl-futures">
@@ -672,7 +816,7 @@
             <span class="price-block"><span class="odds">check board</span></span>
           </div>
           <p class="why">Priced like a fringe contender despite one of the league's best defenses and a Bo Nix-led offense that was arguably a single injury away from the AFC title game last year. Waddle addition raises the receiver room. Book price wasn't consistent across our sources — confirm current number before betting, but the profile screams undervalued.</p>
-          <span class="flames">🌶️<span class="flame-anim">🌶️</span><span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size:11px;">Strong signal</span></span>
+          <span class="flames">🌶️<span class="flame-anim">🌶️</span><span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size: 14px;">Strong signal</span></span>
         </div>
       </div>
 
@@ -684,7 +828,7 @@
             <span class="price-block"><span class="odds num">+5000</span><div class="implied">2.0% implied</div></span>
           </div>
           <p class="why">Sharp Football Analysis' book has Minnesota as a best bet at this number — a real defense plus a schedule that opens up if the young offense finds a floor. This is a lottery-ticket price, size it that way.</p>
-          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size:11px;">Speculative</span></span>
+          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size: 14px;">Speculative</span></span>
         </div>
       </div>
 
@@ -696,7 +840,7 @@
             <span class="price-block"><span class="odds num">+6500</span><div class="implied">1.5% implied</div></span>
           </div>
           <p class="why">Real defense, Jaxson Dart trending up — the comp being thrown around is last year's Patriots surprise run. That's the case for a small flier, not a real forecast.</p>
-          <span class="flames">🌶️ <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size:11px;">Deep longshot</span></span>
+          <span class="flames">🌶️ <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size: 14px;">Deep longshot</span></span>
         </div>
       </div>
 
@@ -708,7 +852,7 @@
             <span class="price-block"><span class="odds num">+800</span><div class="implied">~11% implied</div></span>
           </div>
           <p class="why">Entirely new coaching staff, Robert Saleh brought in to fix a defense that was one of the league's worst. Priced as a non-contender in a division that changed hands last year — that's exactly the spot to look for a repeat upset.</p>
-          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size:11px;">Speculative</span></span>
+          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size: 14px;">Speculative</span></span>
         </div>
       </div>
 
@@ -720,7 +864,7 @@
             <span class="price-block"><span class="odds num">+280</span><div class="implied">26.3% implied</div></span>
           </div>
           <p class="why">Second-easiest schedule in the league this year in a division nobody has fully claimed. Not a sexy pick, but the schedule math is real.</p>
-          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size:11px;">Solid value</span></span>
+          <span class="flames">🌶️<span class="flame-anim">🌶️</span> <span style="color:var(--text-dim); font-family:'Red Hat Mono'; font-size: 14px;">Solid value</span></span>
         </div>
       </div>
 
@@ -856,6 +1000,38 @@
 
   </div>
 
+  <div class="panel panel-nfl-edge">
+
+  <section>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Model vs. Market</p>
+        <h2>Edge Board</h2>
+        <p>Every game on the week's slate, model spread and total next to the market's — ranked by how much they disagree. <b>Not picks</b> — no side is recommended here, just the numbers side by side so you can decide what the gap is worth to you.</p>
+      </div>
+    </div>
+    <div class="empty-state">
+      <div class="icon">📐</div>
+      <h3>Populates once Week 1 lines post</h3>
+      <p>This board needs a real posted slate with real market spreads/totals to compare against — there's nothing to project against a market that doesn't exist yet. Live once regular-season lines are up; format preview below.</p>
+    </div>
+    <div class="value-list" style="margin-top:14px; opacity:0.72;">
+      <div class="value-card">
+        <div class="stripe"></div>
+        <div class="body">
+          <div class="top">
+            <span class="team"><span data-team="BUF">BUF</span> @ <span data-team="KC">KC</span></span>
+            <span class="market">Gap 4.7 pts · spread</span>
+          </div>
+          <p class="why"><b>Spread</b> — model KC&nbsp;-6.5 · market KC&nbsp;-1.8 (gap 4.7)<br><b>Total</b> — model 48.5 · market 46.0 (gap 2.5)</p>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 15.5px; color:var(--text-dim); margin-top:10px;">Format preview, not real numbers. Ranked descending by whichever of spread-gap/total-gap is larger for that game. Powered by the same matchup engine as the rest of this board — see <span class="num">src/analysis/edgeBoard.js</span> and <span class="num">src/weeklyUpdate.js</span> in the repo.</p>
+  </section>
+
+  </div>
+
   <div class="panel panel-cfb-futures cfb-theme">
 
   <section>
@@ -893,7 +1069,7 @@
       <div class="sb-card"><div class="team" data-team="IND">Indiana</div><div class="odds">check board</div><div class="tag">Defending champ, debuted 5th choice, now co-3rd</div></div>
       <div class="sb-card"><div class="team" data-team="TEX">Texas</div><div class="odds">check board</div><div class="tag">SEC runner-up, portal haul: Coleman, more</div></div>
     </div>
-    <p style="font-size:13px; color:var(--text-dim); margin-top:2px;">Also like: <span data-team="TTU">Texas Tech</span> — reigning Big 12 champs adding the portal's most sought QB (Brendan Sorsby), already the heavy Big 12 favorite. Not our top pick since that firepower is already priced in, but a live second choice.</p>
+    <p style="font-size: 16px; color:var(--text-dim); margin-top:2px;">Also like: <span data-team="TTU">Texas Tech</span> — reigning Big 12 champs adding the portal's most sought QB (Brendan Sorsby), already the heavy Big 12 favorite. Not our top pick since that firepower is already priced in, but a live second choice.</p>
   </section>
 
   <section>
@@ -982,6 +1158,38 @@
       <p class="reasoning">This isn't a value spot, it's a market snapshot — a -50000 moneyline means the book is basically taking the game off the board as a betting proposition, so there's no spread lean worth throwing out either. Not logging a side here; the real signal shows up once conference play and ranked matchups are live. Also on Week 0: North Carolina vs. TCU in Dublin, and NC State vs. Virginia in Rio de Janeiro — the sport's first game in Brazil.</p>
       <div class="props-note"><b>Props watch, not picks yet:</b> too early for posted player menus on Week 0 games. Once ranked matchups are on the board (Week 1 onward), expect QB passing yards/TDs, workhorse-RB rushing props, and WR1 receiving yards from the actual posted lines — not invented numbers.</div>
     </div>
+  </section>
+
+  </div>
+
+  <div class="panel panel-cfb-edge cfb-theme">
+
+  <section>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Model vs. Market</p>
+        <h2>Edge Board</h2>
+        <p>Every game on the week's CFB slate, model spread and total next to the market's — ranked by how much they disagree. <b>Not picks</b> — no side is recommended here, just the numbers side by side so you can decide what the gap is worth to you.</p>
+      </div>
+    </div>
+    <div class="empty-state">
+      <div class="icon">📐</div>
+      <h3>Populates once Week 0/1 lines post</h3>
+      <p>This board needs a real posted slate with real market spreads/totals to compare against — there's nothing to project against a market that doesn't exist yet. Live once the season's real lines are up; format preview below.</p>
+    </div>
+    <div class="value-list" style="margin-top:14px; opacity:0.72;">
+      <div class="value-card">
+        <div class="stripe"></div>
+        <div class="body">
+          <div class="top">
+            <span class="team">Marshall @ Louisiana</span>
+            <span class="market">Gap 6.2 pts · total</span>
+          </div>
+          <p class="why"><b>Spread</b> — model Louisiana&nbsp;-2.5 · market Louisiana&nbsp;-2.5 (gap 0.0)<br><b>Total</b> — model 54.2 · market 48.0 (gap 6.2)</p>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 15.5px; color:var(--text-dim); margin-top:10px;">Format preview, not real numbers. Ranked descending by whichever of spread-gap/total-gap is larger for that game. Uses CFBD's own Elo ratings plus real season stats — see <span class="num">src/cfbEdgeBoard.js</span> in the repo for the full methodology and its stated v1 gaps (no weather/EPA/injury signal yet for CFB).</p>
   </section>
 
   </div>
@@ -1122,8 +1330,11 @@
 
   // ---- Page-tab transitions: panel snap-in + football flyby ----
   var football = document.getElementById('football-fly');
+  var menuToggle = document.getElementById('menu-toggle');
   document.querySelectorAll('.tab-input').forEach(function (input) {
     input.addEventListener('change', function () {
+      if (menuToggle) menuToggle.checked = false; // picking a section always closes the menu
+      window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
       if (reduceMotion) return;
       var panel = document.querySelector('.panel-' + input.id.replace('tab-', ''));
       if (panel) {
