@@ -86,20 +86,29 @@ export function leagueAverageAllowedPerGame(defenseAllowedPerGame) {
   return values.reduce((s, v) => s + v, 0) / values.length;
 }
 
-// The projection itself: player's own rate x (opponent-allowed / league-
-// average-allowed). Degrades gracefully — real data or a documented
-// no-op, never a fabricated number: no player rate at all -> null (nothing
-// to project, e.g. a player with zero games so far); missing/unknown
-// opponent-defense data (early season, insufficient sample) -> falls back
-// to the player's own rate unadjusted (factor of 1), same "no data yet, no
+// The projection itself: player's own rate, blended toward the full
+// opponent-adjusted ratio by `matchupWeight` (0 = ignore the matchup
+// entirely, just the player's own rate; 1 = the original full-ratio
+// adjustment; values in between interpolate). Added after backtesting
+// found the full ratio (weight 1, the only option before this) mostly hurt
+// accuracy vs. a naive own-rate-only baseline in 7 of 8 category/season
+// combos — see playerPropsTuneWeight.js and
+// reports/backtest-player-props-2025-08-06.md's "Weight tuning" section
+// for the real per-category weights that search found. Degrades
+// gracefully — real data or a documented no-op, never a fabricated
+// number: no player rate at all -> null (nothing to project, e.g. a
+// player with zero games so far); missing/unknown opponent-defense data
+// (early season, insufficient sample) -> falls back to the player's own
+// rate unadjusted regardless of `matchupWeight`, same "no data yet, no
 // adjustment" posture as matchupEngine.js's dome/no-weather default.
-export function projectPlayerStat({ playerRate, opponentAllowedPerGame, leagueAvgAllowedPerGame }) {
+export function projectPlayerStat({ playerRate, opponentAllowedPerGame, leagueAvgAllowedPerGame, matchupWeight = 1 }) {
   if (!playerRate) return null;
   if (opponentAllowedPerGame == null || leagueAvgAllowedPerGame == null || leagueAvgAllowedPerGame === 0) {
     return { projected: round1(playerRate.avgPerGame), matchupFactor: null };
   }
   const matchupFactor = opponentAllowedPerGame / leagueAvgAllowedPerGame;
-  return { projected: round1(playerRate.avgPerGame * matchupFactor), matchupFactor: round3(matchupFactor) };
+  const blendedFactor = 1 + matchupWeight * (matchupFactor - 1);
+  return { projected: round1(playerRate.avgPerGame * blendedFactor), matchupFactor: round3(matchupFactor) };
 }
 
 function round1(v) { return Math.round(v * 10) / 10; }

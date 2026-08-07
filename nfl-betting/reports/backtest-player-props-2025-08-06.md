@@ -103,11 +103,51 @@ versus Elo alone) — a real, recurring pattern in this project, not a
 one-off. Plausible cause: a defense's per-category allowed rate is a noisy
 signal at typical in-season sample sizes (3-10 games), so the multiplicative
 adjustment amplifies noise more often than it captures real defensive
-strength differences. This wasn't tuned/weighted the way the team-level
-blend was (no grid search here yet) — a natural next step, same playbook as
-`tuneBlendWeights.js`, would be finding whether a *partial* matchup
-adjustment (a blend weight between 0 and 1, not the full ratio) beats both
-extremes, rather than concluding the signal is worthless outright.
+strength differences.
+
+## Weight tuning
+
+Same playbook as `tuneBlendWeights.js`: `analysis/playerProps.js`'s
+`projectPlayerStat` now takes a `matchupWeight` that blends between the
+naive rate (0) and the original full ratio (1) — `playerPropsTuneWeight.js`
+grid-searched it per category (0 to 1.5 in 0.05 steps) against 2024+2025
+pooled, minimizing MAE.
+
+| Category | Original weight | Tuned weight | MAE (original → tuned) |
+|---|---|---|---|
+| Passing yards | 1 | **0.25** | 59.8 → **57.6** |
+| Rushing yards | 1 | **0.1** | 29.4 → **27.8** |
+| Receiving yards | 1 | **0** | 29.0 → **27.4** |
+| Receptions | 1 | **0** | 1.9 → **1.7** |
+
+Receiving yards and receptions land on **weight 0** — the search found no
+opponent-defense signal worth keeping at all for those two; the
+MAE-optimal model is just the naive baseline. Passing and rushing yards
+keep a small sliver of the adjustment (0.25 and 0.1), well short of the
+original full ratio.
+
+### Win percentage
+
+There's no real market line to test a beat-the-book rate against (see
+below), so "win percentage" here means something specific and honestly
+weaker: using the player's own trailing average as the reference line, did
+the tuned model's over/under call match the side the actual result landed
+on? For receiving yards and receptions this question doesn't apply — at
+weight 0 the model never calls a side, it just states the baseline.
+
+| Category | Directional win rate | Record |
+|---|---|---|
+| Passing yards | 52.9% | 397-353 (n=750) |
+| Rushing yards | 50.7% | 349-340 (n=689) |
+| **Pooled (the only 2 categories with a call to grade)** | **51.8%** | 746-693 (n=1,439) |
+
+**Read this honestly, not optimistically**: 51.8% is only 1.4 standard
+errors above a 50/50 coin flip at this sample size — not statistically
+significant at a conventional threshold. This is a real number, not a
+rounding trick, but it should be read as "not clearly distinguishable from
+random" rather than "a proven edge." Receiving yards and receptions have
+no win-rate story at all — tuning concluded the honest model for those two
+is just the player's own average, no directional signal.
 
 ## What this doesn't tell us
 

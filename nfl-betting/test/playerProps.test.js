@@ -87,3 +87,15 @@ test('projectPlayerStat falls back to the player\'s unadjusted rate when opponen
 test('projectPlayerStat returns null when the player has no rate at all (nothing to project)', () => {
   assert.equal(projectPlayerStat({ playerRate: null, opponentAllowedPerGame: 90, leagueAvgAllowedPerGame: 60 }), null);
 });
+
+test('projectPlayerStat\'s matchupWeight interpolates between the naive rate (0) and the full ratio (1, the default)', () => {
+  const base = { playerRate: { gamesPlayed: 3, avgPerGame: 60 }, opponentAllowedPerGame: 90, leagueAvgAllowedPerGame: 60 }; // matchupFactor 1.5
+  const full = projectPlayerStat(base);
+  assert.equal(full.projected, 90); // default weight 1 -- unchanged from before matchupWeight existed
+
+  const naive = projectPlayerStat({ ...base, matchupWeight: 0 });
+  assert.equal(naive.projected, 60); // weight 0 -- ignores the matchup entirely
+
+  const half = projectPlayerStat({ ...base, matchupWeight: 0.5 });
+  assert.equal(half.projected, 75); // halfway between 60 and 90
+});
