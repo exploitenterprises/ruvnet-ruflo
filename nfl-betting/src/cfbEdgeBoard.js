@@ -54,7 +54,7 @@
 //   correctly and projections compute without crashing.
 
 import { computeLeagueAverages } from './analysis/leagueAverages.js';
-import { projectGame } from './analysis/matchupEngine.js';
+import { projectGame, CFB_MARGIN_BLEND_WEIGHTS, CFB_WIN_PROB_BLEND_WEIGHTS } from './analysis/matchupEngine.js';
 import { CONSTANTS as ELO_CONSTANTS } from './analysis/powerRatings.js';
 import { buildEdgeBoard, cfbMarketLine } from './analysis/edgeBoard.js';
 import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel, mapCfbdAdvancedToEpaSplits } from './analysis/cfbStats.js';
@@ -161,6 +161,8 @@ export async function buildCfbEdgeBoard(season, week) {
       leagueAvg,
       neutralSite: g.neutralSite,
       eloPointsPerMargin: ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN,
+      marginBlendWeights: CFB_MARGIN_BLEND_WEIGHTS,
+      winProbBlendWeights: CFB_WIN_PROB_BLEND_WEIGHTS,
       weather,
       epaSplits: { home: epaSplitsByTeam[g.homeTeam], away: epaSplitsByTeam[g.awayTeam] },
       injuries: { home: homeDepthChart, away: awayDepthChart },

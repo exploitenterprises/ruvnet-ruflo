@@ -16,36 +16,32 @@ const AVG_PLAYS_PER_GAME = 64;
 // 55/45 by feel too), never tuned against data until tuneBlendWeights.js
 // could grid-search real backtest results against them — see that file and
 // reports/backtest-full-model-2025-08-06.md's "Weight tuning results"
-// section for the full search and before/after. Tuned against 1,973 real
-// games pooled across NFL/CFB x 2024/2025 (so a combo can't win by
-// overfitting to one league or season): favorite accuracy improved in 3 of
-// 4 league-seasons (NFL 2025 +3.7pp, the biggest single move) and spread
-// MAE improved in all 4 — the exact metric the original weights were
-// consistently losing to Elo alone on — at the cost of a small (~0.003)
-// Brier-score regression in most datasets. The chosen combo sits in a
-// broad, stable region of the search grid (nearby combos perform
-// similarly), not an isolated spike.
+// section for the full search and before/after.
 //
-// MARGIN_BLEND_WEIGHTS: how much the projected point margin trusts the
+// First pass (NFL_*) was tuned pooled across NFL/CFB x 2024/2025 (1,973
+// games) using ONE shared weight set for both leagues — favorite accuracy
+// improved in 3 of 4 league-seasons and spread MAE improved in all 4, but a
+// single pooled weight set is a forced compromise between two leagues with
+// measurably different profiles (see the CFB-specific note below). A
+// second pass (CFB_*) re-ran the same search pooling only CFB's 1,427
+// games — same method, matches the eloPointsPerMargin precedent of CFB
+// getting its own tuned constant (powerRatings.js), not sharing the NFL
+// one. NFL_* is used as projectGame's default (matching
+// eloPointsPerMargin's NFL default); CFB callers (cfbEdgeBoard.js,
+// cfbFullBacktest.js) pass CFB_* explicitly.
+//
+// *_MARGIN_BLEND_WEIGHTS: how much the projected point margin trusts the
 // efficiency-model estimate (`eff`) vs. Elo (`elo`) vs. EPA/play (`epa`)
 // when EPA data is available. When it isn't, `eff`/`elo` are renormalized
 // to sum to 1 (dropping `epa`'s share) rather than using a separate
-// hardcoded fallback. The tuned weights trust Elo far more than the
-// original 0.35 (0.7 vs. 0.35) — the efficiency/EPA signals apparently
-// carry real *who-wins* information (see WIN_PROB_BLEND_WEIGHTS below) but
-// were overweighted for *by how much*, matching the original backtest's
-// finding almost exactly.
-export const MARGIN_BLEND_WEIGHTS = { eff: 0.2, elo: 0.7, epa: 0.1 };
-// WIN_PROB_BLEND_WEIGHTS: how much the final win probability trusts Elo's
-// own win-probability estimate vs. the score-based estimate derived from
-// the (already-blended) projected margin. Tuned to fully route through the
-// score-based estimate (elo: 0) — not "ignore Elo" (the margin blend above
-// already trusts Elo at 0.7, so Elo's influence still dominates the
-// spread scoreBasedWinProb is derived from), but stop injecting Elo's raw
-// win-probability a second time on top of that, which the search found
-// mildly hurt accuracy versus letting the other signals (eff/EPA) actually
-// register in the final win probability, not just in the spread.
-export const WIN_PROB_BLEND_WEIGHTS = { elo: 0, score: 1 };
+// hardcoded fallback.
+export const NFL_MARGIN_BLEND_WEIGHTS = { eff: 0.2, elo: 0.7, epa: 0.1 };
+export const CFB_MARGIN_BLEND_WEIGHTS = { eff: 0.2, elo: 0.7, epa: 0.1 }; // placeholder — see tuneBlendWeights.js's CFB-only pass
+// *_WIN_PROB_BLEND_WEIGHTS: how much the final win probability trusts
+// Elo's own win-probability estimate vs. the score-based estimate derived
+// from the (already-blended) projected margin.
+export const NFL_WIN_PROB_BLEND_WEIGHTS = { elo: 0, score: 1 };
+export const CFB_WIN_PROB_BLEND_WEIGHTS = { elo: 0, score: 1 }; // placeholder — see tuneBlendWeights.js's CFB-only pass
 
 // Ratio-based unit projection: expected points a unit produces/allows relative
 // to league average, in the style of a simplified opponent-adjusted efficiency
@@ -84,8 +80,8 @@ export function projectGame({
   // scaling for winProbToSpread — defaults to the NFL constant. CFB callers (cfbEdgeBoard.js)
   // pass ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN: CFBD's Elo uses a much wider scale (real
   // blowout margins are far larger in CFB), confirmed by backtest — see powerRatings.js.
-  marginBlendWeights = MARGIN_BLEND_WEIGHTS, // { eff, elo, epa } — see the constant above
-  winProbBlendWeights = WIN_PROB_BLEND_WEIGHTS, // { elo, score } — see the constant above
+  marginBlendWeights = NFL_MARGIN_BLEND_WEIGHTS, // { eff, elo, epa } — see the constants above; CFB callers pass CFB_MARGIN_BLEND_WEIGHTS
+  winProbBlendWeights = NFL_WIN_PROB_BLEND_WEIGHTS, // { elo, score } — see the constants above; CFB callers pass CFB_WIN_PROB_BLEND_WEIGHTS
 }) {
   const eloWinProb = matchupWinProbability({ homeRating: home.rating, awayRating: away.rating, neutralSite });
   const eloSpread = winProbToSpread(eloWinProb, eloPointsPerMargin); // home margin implied by Elo

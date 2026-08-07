@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { projectGame, MARGIN_BLEND_WEIGHTS, WIN_PROB_BLEND_WEIGHTS } from '../src/analysis/matchupEngine.js';
+import { projectGame, NFL_MARGIN_BLEND_WEIGHTS, NFL_WIN_PROB_BLEND_WEIGHTS } from '../src/analysis/matchupEngine.js';
 import { computeLeagueAverages } from '../src/analysis/leagueAverages.js';
 import { CONSTANTS as ELO_CONSTANTS } from '../src/analysis/powerRatings.js';
 
@@ -196,7 +196,7 @@ test('eloPointsPerMargin defaults to the NFL constant and CFB\'s (smaller) value
   assert.ok(cfbVariant.projectedSpread > nflDefault.projectedSpread); // same rating gap, larger implied margin
 });
 
-test('marginBlendWeights defaults to MARGIN_BLEND_WEIGHTS and an explicit override changes the projected spread', () => {
+test('marginBlendWeights defaults to NFL_MARGIN_BLEND_WEIGHTS and an explicit override changes the projected spread', () => {
   const base = {
     home: { abbr: 'A', stats: makeStats({ pointsForPerGame: 30 }), rating: 1600 },
     away: { abbr: 'B', stats: makeStats(), rating: 1450 },
@@ -204,7 +204,7 @@ test('marginBlendWeights defaults to MARGIN_BLEND_WEIGHTS and an explicit overri
     weather: { isDome: true },
   };
   const withDefault = projectGame(base);
-  const explicitDefault = projectGame({ ...base, marginBlendWeights: MARGIN_BLEND_WEIGHTS });
+  const explicitDefault = projectGame({ ...base, marginBlendWeights: NFL_MARGIN_BLEND_WEIGHTS });
   assert.equal(withDefault.projectedSpread, explicitDefault.projectedSpread);
 
   const eloHeavy = projectGame({ ...base, marginBlendWeights: { eff: 0.1, elo: 0.9, epa: 0 } });
@@ -228,7 +228,7 @@ test('marginBlendWeights renormalizes eff/elo to sum to 1 when no EPA data is su
   assert.equal(renormalized.projectedSpread, explicitHalfHalf.projectedSpread);
 });
 
-test('winProbBlendWeights defaults to WIN_PROB_BLEND_WEIGHTS and an all-Elo override matches raw Elo win probability', () => {
+test('winProbBlendWeights defaults to NFL_WIN_PROB_BLEND_WEIGHTS and an all-Elo override matches raw Elo win probability', () => {
   const base = {
     home: { abbr: 'A', stats: makeStats({ pointsForPerGame: 30 }), rating: 1650 },
     away: { abbr: 'B', stats: makeStats(), rating: 1400 },
@@ -236,7 +236,7 @@ test('winProbBlendWeights defaults to WIN_PROB_BLEND_WEIGHTS and an all-Elo over
     weather: { isDome: true },
   };
   const withDefault = projectGame(base);
-  const explicitDefault = projectGame({ ...base, winProbBlendWeights: WIN_PROB_BLEND_WEIGHTS });
+  const explicitDefault = projectGame({ ...base, winProbBlendWeights: NFL_WIN_PROB_BLEND_WEIGHTS });
   assert.equal(withDefault.homeWinProb, explicitDefault.homeWinProb);
 
   const allElo = projectGame({ ...base, winProbBlendWeights: { elo: 1, score: 0 } });

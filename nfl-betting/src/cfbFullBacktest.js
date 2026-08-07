@@ -23,7 +23,7 @@
 // re-running projectGame's cheap pure computation against already-fetched
 // games, instead of re-fetching a whole season per candidate weight combo.
 
-import { projectGame } from './analysis/matchupEngine.js';
+import { projectGame, CFB_MARGIN_BLEND_WEIGHTS, CFB_WIN_PROB_BLEND_WEIGHTS } from './analysis/matchupEngine.js';
 import { computeLeagueAverages } from './analysis/leagueAverages.js';
 import { CONSTANTS as ELO_CONSTANTS } from './analysis/powerRatings.js';
 import { groupStatsByTeam, computeTeamPointsSplits, mapCfbdStatsToModel, mapCfbdAdvancedToEpaSplits } from './analysis/cfbStats.js';
@@ -72,6 +72,8 @@ export async function buildCfbBacktestGames(season, { weeks = Array.from({ lengt
         weather: { isDome: true }, // see file header
         neutralSite: g.neutralSite,
         eloPointsPerMargin: ELO_CONSTANTS.CFB_ELO_POINTS_PER_MARGIN,
+        marginBlendWeights: CFB_MARGIN_BLEND_WEIGHTS,
+        winProbBlendWeights: CFB_WIN_PROB_BLEND_WEIGHTS,
         epaSplits: { home: epaSplitsByTeam[g.homeTeam], away: epaSplitsByTeam[g.awayTeam] },
         homeWon: g.homePoints > g.awayPoints,
         actualMargin: g.homePoints - g.awayPoints,
