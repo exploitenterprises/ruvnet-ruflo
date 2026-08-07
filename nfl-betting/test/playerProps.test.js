@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildOpponentSchedule, aggregatePlayerRateThroughWeek, computeDefenseAllowedPerGame,
   leagueAverageAllowedPerGame, shrinkDefenseRates, projectPlayerStat,
+  aggregatePlayerRateOverWindow, computePlayerEfficiency, projectFromUsageTrend,
 } from '../src/analysis/playerProps.js';
 
 test('buildOpponentSchedule parses SEASON_WEEK_AWAY_HOME game IDs into a symmetric week->team->opponent map', () => {
@@ -117,4 +118,58 @@ test('projectPlayerStat\'s matchupWeight interpolates between the naive rate (0)
 
   const half = projectPlayerStat({ ...base, matchupWeight: 0.5 });
   assert.equal(half.projected, 75); // halfway between 60 and 90
+});
+
+const USAGE_ROWS = [
+  // Targets trending up over the season: 4, 6, 8 -- most recent games are the busiest
+  { week: 1, player_gsis_id: 'P1', targets: 4, receptions: 3, yards: 30 },
+  { week: 2, player_gsis_id: 'P1', targets: 6, receptions: 4, yards: 50 },
+  { week: 3, player_gsis_id: 'P1', targets: 8, receptions: 6, yards: 70 },
+];
+
+test('aggregatePlayerRateOverWindow averages only the most recent N games, not the full season', () => {
+  const last2 = aggregatePlayerRateOverWindow(USAGE_ROWS, 'P1', 'targets', 3, 2);
+  assert.equal(last2.gamesPlayed, 2);
+  assert.equal(last2.avgPerGame, 7); // (6+8)/2, weeks 2-3 only -- week 1 excluded by the window
+
+  const fullWindow = aggregatePlayerRateOverWindow(USAGE_ROWS, 'P1', 'targets', 3, 10); // window bigger than history
+  assert.equal(fullWindow.gamesPlayed, 3);
+  assert.equal(fullWindow.avgPerGame, 6); // (4+6+8)/3 -- same as the season average when the window covers everything
+});
+
+test('aggregatePlayerRateOverWindow respects the throughWeek cutoff before applying the window (no lookahead)', () => {
+  const rate = aggregatePlayerRateOverWindow(USAGE_ROWS, 'P1', 'targets', 2, 2);
+  assert.equal(rate.gamesPlayed, 2);
+  assert.equal(rate.avgPerGame, 5); // (4+6)/2 -- week 3 doesn't exist yet as of throughWeek=2
+});
+
+test('computePlayerEfficiency divides summed totals, not an average of per-game ratios', () => {
+  // yards-per-target across all 3 games: (30+50+70) / (4+6+8) = 150/18
+  const ypt = computePlayerEfficiency(USAGE_ROWS, 'P1', 'yards', 'targets', 3);
+  assert.ok(Math.abs(ypt - 150 / 18) < 1e-9);
+});
+
+test('computePlayerEfficiency returns null when the denominator sums to zero (nothing to divide by)', () => {
+  const rows = [{ week: 1, player_gsis_id: 'P2', targets: 0, yards: 0 }];
+  assert.equal(computePlayerEfficiency(rows, 'P2', 'yards', 'targets', 1), null);
+});
+
+test('projectFromUsageTrend at weight 0 is algebraically identical to the plain season average of the compound stat', () => {
+  const seasonUsage = aggregatePlayerRateThroughWeek(USAGE_ROWS, 'P1', 'targets', 3); // avg targets/game
+  const efficiency = computePlayerEfficiency(USAGE_ROWS, 'P1', 'yards', 'targets', 3); // yards per target
+  const proj = projectFromUsageTrend({ seasonUsageRate: seasonUsage, recentUsageRate: null, efficiency, usageTrendWeight: 0 });
+  const plainSeasonYards = aggregatePlayerRateThroughWeek(USAGE_ROWS, 'P1', 'yards', 3).avgPerGame;
+  assert.ok(Math.abs(proj.projected - plainSeasonYards) < 0.05); // small tolerance for round1 rounding on each side
+});
+
+test('projectFromUsageTrend at weight 1 uses the recent-window usage rate instead of the season rate', () => {
+  const seasonUsage = aggregatePlayerRateThroughWeek(USAGE_ROWS, 'P1', 'targets', 3); // avg 6/game
+  const recentUsage = aggregatePlayerRateOverWindow(USAGE_ROWS, 'P1', 'targets', 3, 1); // last game only: 8
+  const efficiency = computePlayerEfficiency(USAGE_ROWS, 'P1', 'yards', 'targets', 3);
+  const full = projectFromUsageTrend({ seasonUsageRate: seasonUsage, recentUsageRate: recentUsage, efficiency, usageTrendWeight: 1 });
+  assert.equal(full.blendedUsage, 8); // pure recent-window usage, ignoring the season-long 6
+});
+
+test('projectFromUsageTrend returns null with no season usage rate at all', () => {
+  assert.equal(projectFromUsageTrend({ seasonUsageRate: null, recentUsageRate: null, efficiency: 5 }), null);
 });

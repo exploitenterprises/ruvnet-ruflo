@@ -146,3 +146,64 @@ export function projectPlayerStat({ playerRate, opponentAllowedPerGame, leagueAv
 
 function round1(v) { return Math.round(v * 10) / 10; }
 function round3(v) { return Math.round(v * 1000) / 1000; }
+
+// --- Usage-trend model (receiving yards/receptions) ---
+// After the opponent-defense adjustment (projectPlayerStat above) and its
+// position-split follow-up both found no usable signal for receiving
+// yards/receptions (see reports/backtest-player-props-2025-08-06.md), this
+// tests a genuinely different hypothesis instead of re-slicing the same
+// one: usage volume (targets) shifting recently — a role change, a hot
+// streak earning more snaps, an injury elsewhere on the offense — is a
+// leading indicator a flat season-long average can't see, even though the
+// season-long average IS the more statistically reliable number for
+// "usual" volume. Decomposes into usage x efficiency (targets x
+// yards-per-target, or targets x catch-rate) rather than projecting the
+// compound stat directly — yards-per-target and catch-rate are read as
+// season-long ratios (stabler than a per-game average), while the targets
+// side blends toward a shorter recent window.
+
+// A player's own average for one stat field over just the last
+// `windowGames` games at or before `throughWeek` (most recent first) — the
+// "recent form" input a trend signal needs, as opposed to
+// aggregatePlayerRateThroughWeek's full-season average.
+export function aggregatePlayerRateOverWindow(rows, playerId, statField, throughWeek, windowGames) {
+  const played = rows
+    .filter((r) => r.player_gsis_id === playerId && r.week <= throughWeek)
+    .sort((a, b) => b.week - a.week)
+    .slice(0, windowGames);
+  if (played.length === 0) return null;
+  const sum = played.reduce((s, r) => s + (Number(r[statField]) || 0), 0);
+  return { gamesPlayed: played.length, avgPerGame: sum / played.length };
+}
+
+// A player's own efficiency ratio (e.g. yards per target, or receptions
+// per target = catch rate) through `throughWeek` — sum-of-numerator over
+// sum-of-denominator across real games, not an average-of-per-game-ratios
+// (which would let a low-volume game's noisy ratio count as much as a
+// high-volume one). Null when the player has no games, or the denominator
+// is always zero (nothing to divide by — e.g. zero targets all season).
+export function computePlayerEfficiency(rows, playerId, numeratorField, denominatorField, throughWeek) {
+  const played = rows.filter((r) => r.player_gsis_id === playerId && r.week <= throughWeek);
+  if (played.length === 0) return null;
+  const numSum = played.reduce((s, r) => s + (Number(r[numeratorField]) || 0), 0);
+  const denomSum = played.reduce((s, r) => s + (Number(r[denominatorField]) || 0), 0);
+  if (denomSum === 0) return null;
+  return numSum / denomSum;
+}
+
+// The usage-trend projection: blends season-long usage volume toward a
+// shorter recent-window usage rate by `usageTrendWeight` (0 = pure
+// season-long usage — algebraically identical to the plain season average
+// of the target stat itself, see the note in playerPropsBacktest.js; 1 =
+// pure recent-window usage), then multiplies by the season-long efficiency
+// ratio. Degrades gracefully: no season usage rate or no efficiency number
+// at all -> null (nothing to project); no recent-window data specifically
+// (rare — would need real games but none within the window, i.e. a bye
+// mid-window) -> falls back to the season rate, same "no data yet, no
+// adjustment" posture as the rest of this module.
+export function projectFromUsageTrend({ seasonUsageRate, recentUsageRate, efficiency, usageTrendWeight = 0 }) {
+  if (!seasonUsageRate || efficiency == null) return null;
+  const recentAvg = recentUsageRate ? recentUsageRate.avgPerGame : seasonUsageRate.avgPerGame;
+  const blendedUsage = seasonUsageRate.avgPerGame * (1 - usageTrendWeight) + recentAvg * usageTrendWeight;
+  return { projected: round1(blendedUsage * efficiency), blendedUsage: round1(blendedUsage) };
+}

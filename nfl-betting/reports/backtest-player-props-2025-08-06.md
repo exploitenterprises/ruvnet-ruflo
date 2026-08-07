@@ -185,6 +185,50 @@ is dominated by within-game variance (target distribution, game script,
 one broken tackle) that a defense's season-to-date allowed rate — however
 it's sliced — just doesn't explain much of, at these sample sizes.
 
+## Usage-trend model (also tested, also didn't help)
+
+Second, genuinely different hypothesis: instead of re-slicing the
+opponent-defense signal again, built a usage-trend model —
+`projectFromUsageTrend` in `analysis/playerProps.js` — that drops the
+opponent adjustment entirely and instead decomposes the projection into
+targets (usage) x efficiency (yards-per-target or catch-rate), blending
+season-long target volume toward a shorter recent-window rate
+(`usageTrendWeight`, `windowGames`) to try to catch a real role change —
+a hot streak earning more snaps, a role shift after an injury elsewhere on
+the offense — that a flat season average can't see. At weight 0 this is
+algebraically identical to the plain season average (verified with a unit
+test), so it's a strict test of "does recent usage add anything," not a
+different baseline.
+
+Grid-searched usageTrendWeight (0-1) x windowGames (1, 2, 3, 4, 5, 6, 8
+games) — 141 combos per category, pooled across 2024+2025:
+
+| Category | Combos beating the naive baseline | Best result |
+|---|---|---|
+| Receiving yards | **0 of 141** | Still weight 0 (naive), MAE 27.4 |
+| Receptions | **0 of 141** | Still weight 0 (naive), MAE 1.7 |
+
+Same clean result as the position split: no MAE improvement anywhere in
+the grid. There's a faint directional hint in one slice (receptions at
+weight 0.45/window 5 games: 53.2% win rate, n=628) — reported for
+completeness, but at 1.6 standard errors above a coin flip it's not
+meaningfully different from the passing-yards win rate already reported
+above, and picking that one slice out of 141 tested combos rather than
+sticking with the same MAE-first criterion used everywhere else in this
+project would be cherry-picking, not a finding.
+
+**Honest bottom line after two independent negative results**: neither
+"who's the opponent" nor "is usage trending" explains individual-game
+receiving output beyond the player's own season-long average, at least at
+the sample sizes two NFL seasons provide. Both are real, legitimate
+hypotheses that got a fair, thorough test — this isn't "we didn't try hard
+enough," it's a genuine finding about where the accessible signal runs
+out for these two categories with this data. `DEFAULT_USAGE_TREND_WEIGHTS`
+stays at 0 for both, same as `DEFAULT_MATCHUP_WEIGHTS` — receiving
+yards/receptions projections are, honestly, just the player's own recent
+average, and that's the best this project's data can currently do for
+them.
+
 ## What this doesn't tell us
 
 - **No historical market-line comparison.** The Odds API only carries
