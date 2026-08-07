@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildOpponentSchedule, aggregatePlayerRateThroughWeek, computeDefenseAllowedPerGame,
-  leagueAverageAllowedPerGame, projectPlayerStat,
+  leagueAverageAllowedPerGame, shrinkDefenseRates, projectPlayerStat,
 } from '../src/analysis/playerProps.js';
 
 test('buildOpponentSchedule parses SEASON_WEEK_AWAY_HOME game IDs into a symmetric week->team->opponent map', () => {
@@ -43,7 +43,7 @@ test('aggregatePlayerRateThroughWeek returns null for a player with no games yet
   assert.equal(rate, null);
 });
 
-test('computeDefenseAllowedPerGame sums same-game contributions from multiple offensive players before averaging across games', () => {
+test('computeDefenseAllowedPerGame sums same-game contributions from multiple offensive players before averaging across games, and reports the real game count', () => {
   const rows = [
     // Week 1: SF's offense (2 receivers) plays ARI's defense
     { week: 1, team_abbr: 'SF', yards: 80 },
@@ -53,8 +53,8 @@ test('computeDefenseAllowedPerGame sums same-game contributions from multiple of
   ];
   const schedule = { 1: { SF: 'ARI', ARI: 'SF' }, 2: { SF: 'SEA', SEA: 'SF' } };
   const allowed = computeDefenseAllowedPerGame(rows, 'yards', schedule, 2);
-  assert.equal(allowed.ARI, 120); // 80+40 in one game, one game sample
-  assert.equal(allowed.SEA, 60);
+  assert.deepEqual(allowed.ARI, { avgAllowedPerGame: 120, games: 1 }); // 80+40 in one game, one game sample
+  assert.deepEqual(allowed.SEA, { avgAllowedPerGame: 60, games: 1 });
 });
 
 test('computeDefenseAllowedPerGame respects the throughWeek cutoff (no lookahead)', () => {
@@ -64,12 +64,31 @@ test('computeDefenseAllowedPerGame respects the throughWeek cutoff (no lookahead
   ];
   const schedule = { 1: { SF: 'ARI', ARI: 'SF' }, 2: { SF: 'ARI', ARI: 'SF' } };
   const allowed = computeDefenseAllowedPerGame(rows, 'yards', schedule, 1);
-  assert.equal(allowed.ARI, 100);
+  assert.equal(allowed.ARI.avgAllowedPerGame, 100);
+  assert.equal(allowed.ARI.games, 1);
 });
 
 test('leagueAverageAllowedPerGame averages across every defense with data, null when there is none', () => {
-  assert.equal(leagueAverageAllowedPerGame({ ARI: 100, SEA: 200 }), 150);
+  assert.equal(leagueAverageAllowedPerGame({ ARI: { avgAllowedPerGame: 100 }, SEA: { avgAllowedPerGame: 200 } }), 150);
   assert.equal(leagueAverageAllowedPerGame({}), null);
+});
+
+test('shrinkDefenseRates pulls a small-sample defense rate toward league average, proportionally to priorGames', () => {
+  const allowed = { ARI: { avgAllowedPerGame: 200, games: 4 } }; // way above a 100 league average, only 4 games of evidence
+  // priorGames=4 (same weight as the real sample) should land exactly halfway: (4*200 + 4*100) / 8 = 150
+  const shrunk = shrinkDefenseRates(allowed, 100, 4);
+  assert.equal(shrunk.ARI, 150);
+});
+
+test('shrinkDefenseRates shrinks less as the defense\'s own sample size grows (more real evidence, less pulled toward the prior)', () => {
+  const smallSample = shrinkDefenseRates({ ARI: { avgAllowedPerGame: 200, games: 2 } }, 100, 4);
+  const bigSample = shrinkDefenseRates({ ARI: { avgAllowedPerGame: 200, games: 16 } }, 100, 4);
+  assert.ok(bigSample.ARI > smallSample.ARI); // more real games -> closer to the raw 200, farther from the 100 prior
+});
+
+test('shrinkDefenseRates with priorGames=0 is a no-op, returning the raw rate unchanged', () => {
+  const shrunk = shrinkDefenseRates({ ARI: { avgAllowedPerGame: 200, games: 3 } }, 100, 0);
+  assert.equal(shrunk.ARI, 200);
 });
 
 test('projectPlayerStat scales the player\'s own rate by the opponent-vs-league-average ratio', () => {

@@ -56,7 +56,11 @@ export function aggregatePlayerRateThroughWeek(rows, playerId, statField, throug
 // `throughWeek` — attributes each offensive player-week's output to the
 // DEFENSE that allowed it (via the opponent schedule), summed per game
 // (a defense faces multiple contributing players in the same game) then
-// averaged across games. Returns { [defenseTeam]: avgAllowedPerGame }.
+// averaged across games. `rows` can be pre-filtered to a position group
+// (e.g. only WR rows) for a position-specific allowed rate — the function
+// itself doesn't care, it just aggregates whatever rows it's given.
+// Returns { [defenseTeam]: { avgAllowedPerGame, games } } — `games` (the
+// defense's own real sample size) is what shrinkDefenseRates needs.
 export function computeDefenseAllowedPerGame(rows, statField, schedule, throughWeek) {
   const perTeamWeek = {}; // `${defTeam}|${week}` -> summed amount allowed that game
   for (const r of rows) {
@@ -72,18 +76,47 @@ export function computeDefenseAllowedPerGame(rows, statField, schedule, throughW
     sums[defTeam] = (sums[defTeam] ?? 0) + amount;
     games[defTeam] = (games[defTeam] ?? 0) + 1;
   }
-  const perGame = {};
-  for (const team of Object.keys(sums)) perGame[team] = sums[team] / games[team];
-  return perGame;
+  const result = {};
+  for (const team of Object.keys(sums)) result[team] = { avgAllowedPerGame: sums[team] / games[team], games: games[team] };
+  return result;
 }
 
 // League-average allowed-per-game across every defense with data — the
 // zero-adjustment baseline an individual defense's allowed rate is read
 // against (mirrors leagueAverages.js's role for team-level projections).
 export function leagueAverageAllowedPerGame(defenseAllowedPerGame) {
-  const values = Object.values(defenseAllowedPerGame);
+  const values = Object.values(defenseAllowedPerGame).map((v) => v.avgAllowedPerGame);
   if (values.length === 0) return null;
   return values.reduce((s, v) => s + v, 0) / values.length;
+}
+
+// Regresses each defense's allowed rate toward the league average based on
+// its own real sample size — a defense's rate after 3 games is far less
+// reliable than after 10, but computeDefenseAllowedPerGame alone treats
+// both as equally trustworthy. `priorGames` is how many "games worth" of
+// league-average belief to blend in: a defense with `priorGames` real
+// games gets pulled halfway to league average; more real games dilutes
+// the prior's influence, matching the standard empirical-Bayes shrinkage
+// shape (same idea as regressToMean in powerRatings.js, applied here to a
+// rate instead of a rating). `priorGames: 0` is a no-op (returns the raw
+// rates unchanged) — the default everywhere except position-split
+// receiving categories, which needed it once splitting by position cut
+// each bucket's sample size (see playerPropsTuneWeight.js).
+export function shrinkDefenseRates(defenseAllowedPerGame, leagueAvg, priorGames) {
+  if (leagueAvg == null) return {};
+  const shrunk = {};
+  for (const [team, { avgAllowedPerGame, games }] of Object.entries(defenseAllowedPerGame)) {
+    shrunk[team] = shrinkRate(avgAllowedPerGame, games, leagueAvg, priorGames);
+  }
+  return shrunk;
+}
+
+// Single-value version of the same shrinkage math — used when scoring
+// already-fetched per-game records one at a time (playerPropsBacktest.js's
+// scoreCategoryGames) rather than a whole team-keyed map at once.
+export function shrinkRate(avgAllowedPerGame, games, leagueAvg, priorGames) {
+  if (leagueAvg == null) return avgAllowedPerGame;
+  return priorGames > 0 ? (games * avgAllowedPerGame + priorGames * leagueAvg) / (games + priorGames) : avgAllowedPerGame;
 }
 
 // The projection itself: player's own rate, blended toward the full

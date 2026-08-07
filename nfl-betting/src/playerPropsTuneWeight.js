@@ -1,13 +1,16 @@
-// Grid-searches analysis/playerProps.js's matchupWeight (the blend between
-// a naive own-rate-only projection and the full opponent-adjusted ratio)
-// per stat category, against real backtest data. See
+// Grid-searches analysis/playerProps.js's matchupWeight (and, for the
+// position-split receiving categories, priorGames shrinkage strength) per
+// stat category, against real backtest data. See
 // reports/backtest-player-props-2025-08-06.md for why this exists: the
 // full ratio (the only option before matchupWeight existed) lost to the
 // naive baseline on MAE in 7 of 8 category/season combos — a real,
-// measured overcorrection, not a guess that weight 1 was wrong.
+// measured overcorrection, not a guess that weight 1 was wrong. Receiving
+// yards/receptions then got a position split (WR vs. TE, separately) on
+// top, which needed its own weight+shrinkage search since splitting cut
+// each bucket's sample size.
 //
 // Fetches each season ONCE (via playerPropsBacktest.js's
-// buildPlayerPropsGames), then re-scores every candidate weight against
+// buildPlayerPropsGames), then re-scores every candidate combo against
 // those same fetched games — pure computation, no network.
 //
 // "Win rate" here is the honest analog of the team-level backtest's
@@ -46,7 +49,25 @@ function directionalWinRate(predictions) {
   return { n: total, wins, losses, winPct: total ? Math.round((wins / total) * 1000) / 10 : null };
 }
 
-export async function tunePlayerPropsWeights({ step = 0.05, max = 1.5, onProgress } = {}) {
+function scoreCombo(pooledGames, matchupWeight, priorGames) {
+  const preds = scoreCategoryGames(pooledGames, matchupWeight, priorGames);
+  return {
+    matchupWeight, priorGames,
+    mae: errorStats(preds, 'projected', 'actual')?.mae ?? null,
+    bias: errorStats(preds, 'projected', 'actual')?.bias ?? null,
+    directional: directionalWinRate(preds),
+  };
+}
+
+// `positionSplitCategories` get a 2D search (matchupWeight x priorGames);
+// everything else gets the original 1D matchupWeight-only search
+// (priorGames fixed at 0 — no shrinkage, since they're not position-split
+// and were already tuned without it).
+export async function tunePlayerPropsWeights({
+  step = 0.05, max = 1.5, priorGamesGrid = [0, 2, 4, 8, 16, 32],
+  positionSplitCategories = ['receivingYards', 'receptions'],
+  onProgress,
+} = {}) {
   onProgress?.('fetching 2024...');
   const games2024 = await buildPlayerPropsGames(2024);
   onProgress?.('fetching 2025...');
@@ -54,20 +75,19 @@ export async function tunePlayerPropsWeights({ step = 0.05, max = 1.5, onProgres
 
   const categories = Object.keys(games2024);
   const grid = weightGrid(step, max);
-  onProgress?.(`scoring ${grid.length} weights x ${categories.length} categories...`);
+  onProgress?.(`scoring ${categories.length} categories...`);
 
   const results = {};
   for (const category of categories) {
     const pooledGames = [...games2024[category], ...games2025[category]];
-    const scored = grid.map((matchupWeight) => {
-      const preds = scoreCategoryGames(pooledGames, matchupWeight);
-      return {
-        matchupWeight,
-        mae: errorStats(preds, 'projected', 'actual')?.mae ?? null,
-        bias: errorStats(preds, 'projected', 'actual')?.bias ?? null,
-        directional: directionalWinRate(preds),
-      };
-    });
+    const isSplit = positionSplitCategories.includes(category);
+    const scored = [];
+    for (const matchupWeight of grid) {
+      const priorGrid = isSplit ? priorGamesGrid : [0];
+      for (const priorGames of priorGrid) {
+        scored.push(scoreCombo(pooledGames, matchupWeight, priorGames));
+      }
+    }
     const best = [...scored].sort((a, b) => a.mae - b.mae)[0];
     results[category] = { scored, best, n: pooledGames.length };
   }

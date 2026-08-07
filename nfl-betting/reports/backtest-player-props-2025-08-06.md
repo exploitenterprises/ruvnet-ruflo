@@ -149,6 +149,42 @@ random" rather than "a proven edge." Receiving yards and receptions have
 no win-rate story at all — tuning concluded the honest model for those two
 is just the player's own average, no directional signal.
 
+## Position split (tested, didn't help)
+
+Leading hypothesis for why receiving yards/receptions found zero signal:
+`computeDefenseAllowedPerGame` lumped every receiver together into one
+"yards allowed" number per defense, which would wash out a real effect —
+a defense tough on WRs but leaky on TEs (or vice versa) shows up as a
+misleading medium number for both. Built the fix: split the allowed-rate
+calculation by receiver position (WR vs. TE — nflverse's NGS receiving
+file only ever has those two positions, confirmed live, zero RB rows),
+plus shrinkage toward league average (`shrinkDefenseRates`/`shrinkRate`,
+regressing a defense's rate toward the mean based on its own real sample
+size) to cover the smaller per-position samples splitting creates.
+
+Grid-searched matchupWeight (0-1.5) x priorGames shrinkage strength
+(0, 2, 4, 8, 16, 32 games) — 186 combos per category, pooled across
+2024+2025:
+
+| Category | Combos beating the naive baseline | Best result |
+|---|---|---|
+| Receiving yards | **0 of 186** | Still weight 0 (naive), MAE 27.4 |
+| Receptions | **0 of 186** | Still weight 0 (naive), MAE 1.7 |
+
+**Honest conclusion: this didn't work.** Not "we didn't search hard
+enough" — the search covered every weight/shrinkage combination that could
+plausibly help, and none did. Even at the smallest tested non-zero weight
+(0.05), MAE was flat-to-worse and the directional win rate was
+indistinguishable from (receiving yards, 50.4%) or below (receptions, 49%)
+a coin flip. The position-split code stays (it's correct, tested
+infrastructure, and the per-position defense-allowed data may be useful
+for something else later), but it's not turned on by default — same
+`matchupWeight: 0` conclusion as before the split, just tested far more
+thoroughly. The likely real explanation: individual-game receiving output
+is dominated by within-game variance (target distribution, game script,
+one broken tackle) that a defense's season-to-date allowed rate — however
+it's sliced — just doesn't explain much of, at these sample sizes.
+
 ## What this doesn't tell us
 
 - **No historical market-line comparison.** The Odds API only carries
