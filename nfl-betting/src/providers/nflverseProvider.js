@@ -86,14 +86,28 @@ const RUSHING_NUMERIC = ['season', 'week', 'efficiency', 'percent_attempts_gte_e
 const PBP_NUMERIC = ['week', 'down', 'epa', 'success', 'qb_epa', 'penalty', 'penalty_yards'];
 const OFFICIALS_NUMERIC = ['season', 'week', 'jersey_number'];
 
+// Real, live-confirmed data-quality gotcha in all three NGS files: `week: 0`
+// isn't preseason or a bye — it's a SEASON-TOTAL row for that player folded
+// into the same weekly file (e.g. a "week 0" row with attempts:504,
+// pass_yards:3870 for a QB — an entire season's totals, not one game).
+// Left in, any per-game aggregation (analysis/playerProps.js's trailing
+// averages) silently treats a full season as a single game and inflates
+// every rate by roughly a season's worth of extra yardage — caught via
+// backtesting a wildly unrealistic 235-yard single-game receiving
+// projection back to this row. Filtered once here, at the source, rather
+// than in every consumer.
+function excludeSeasonAggregateRows(rows) {
+  return rows.filter((r) => r.week !== 0);
+}
+
 export async function fetchNgsReceiving() {
-  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_receiving.csv.gz'), RECEIVING_NUMERIC);
+  return excludeSeasonAggregateRows(coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_receiving.csv.gz'), RECEIVING_NUMERIC));
 }
 export async function fetchNgsPassing() {
-  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_passing.csv.gz'), PASSING_NUMERIC);
+  return excludeSeasonAggregateRows(coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_passing.csv.gz'), PASSING_NUMERIC));
 }
 export async function fetchNgsRushing() {
-  return coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_rushing.csv.gz'), RUSHING_NUMERIC);
+  return excludeSeasonAggregateRows(coerceNumeric(await fetchGzippedCsv('nextgen_stats', 'ngs_rushing.csv.gz'), RUSHING_NUMERIC));
 }
 
 // Full play-by-play for one season — team abbreviations (posteam/defteam),

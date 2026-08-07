@@ -90,6 +90,21 @@ export function totalError(predictions) {
   };
 }
 
+// Generic version of spreadError/totalError's MAE+bias math for any
+// {projected, actual}-shaped predictions with different field names — used
+// by playerPropsBacktest.js (projected/actual player stat values), so a new
+// backtest domain doesn't need its own hardcoded field-name variant.
+export function errorStats(predictions, projectedField, actualField) {
+  const withData = predictions.filter((p) => p[projectedField] != null && p[actualField] != null);
+  if (!withData.length) return null;
+  const errors = withData.map((p) => p[projectedField] - p[actualField]);
+  return {
+    n: withData.length,
+    mae: round1(errors.reduce((s, e) => s + Math.abs(e), 0) / errors.length),
+    bias: round1(errors.reduce((s, e) => s + e, 0) / errors.length),
+  };
+}
+
 // If you only bet the games where the model disagreed with the market by
 // at least `threshold` points (the same "gap" edgeBoard.js ranks by), what
 // was the actual cover rate? This is the real test of whether the edge

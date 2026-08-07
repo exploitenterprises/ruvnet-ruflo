@@ -1,0 +1,106 @@
+// Player-prop projections: opponent-adjusted point-in-time rate projections
+// for the stat categories real prop markets actually offer (passing/rushing/
+// receiving yards, receptions). Same ratio-adjustment shape as
+// matchupEngine.js's unitAdjustedPoints (player's own rate x opponent-allowed
+// factor relative to league average) — deliberately reusing that pattern
+// rather than inventing a new one.
+//
+// Built entirely from nflverse's weekly NGS files (providers/nflverseProvider.js's
+// fetchNgsPassing/fetchNgsRushing/fetchNgsReceiving — already have real
+// per-game rows with a `week` column, confirmed live) plus play-by-play's
+// `game_id` (format "SEASON_WEEK_AWAY_HOME") to derive each team's weekly
+// opponent — no new data source needed, no separate schedule endpoint call.
+//
+// Real bug found and fixed here (same class as statsProvider.js's WAS/WSH
+// fix): nflverse's play-by-play uses "LA" for the Rams (posteam/defteam and
+// game_id), but the NGS files use "LAR" — confirmed live, the only mismatch
+// across all 32 teams in both datasets. Left uncorrected, every Rams game's
+// opponent-allowed attribution would silently fail to join. Canonicalized
+// once here, at the schedule-derivation source.
+const PBP_ABBR_TO_CANONICAL = { LA: 'LAR' };
+function canonicalAbbr(abbr) {
+  return PBP_ABBR_TO_CANONICAL[abbr] ?? abbr;
+}
+
+// Parses nflverse pbp's `game_id`s ("2024_05_ARI_SF") into a
+// { [week]: { [team]: opponent } } schedule map — real per-week matchups,
+// not a hand-maintained table. `gameIds` can have duplicates (one per play);
+// dedupes internally.
+export function buildOpponentSchedule(gameIds) {
+  const schedule = {};
+  for (const id of new Set(gameIds)) {
+    const parts = id.split('_');
+    if (parts.length !== 4) continue;
+    const week = Number(parts[1]);
+    const away = canonicalAbbr(parts[2]);
+    const home = canonicalAbbr(parts[3]);
+    if (!week || !away || !home) continue;
+    (schedule[week] ??= {})[home] = away;
+    schedule[week][away] = home;
+  }
+  return schedule;
+}
+
+// A player's own trailing average for one stat field, using only games
+// through `throughWeek` (no lookahead) — the point-in-time input to a
+// projection for week `throughWeek + 1`. `rows` is a full NGS file's rows
+// (any position/team); filtered here to one player.
+export function aggregatePlayerRateThroughWeek(rows, playerId, statField, throughWeek) {
+  const played = rows.filter((r) => r.player_gsis_id === playerId && r.week <= throughWeek);
+  if (played.length === 0) return null;
+  const sum = played.reduce((s, r) => s + (Number(r[statField]) || 0), 0);
+  return { gamesPlayed: played.length, avgPerGame: sum / played.length };
+}
+
+// Per-defense average allowed-per-game for one stat field, through
+// `throughWeek` — attributes each offensive player-week's output to the
+// DEFENSE that allowed it (via the opponent schedule), summed per game
+// (a defense faces multiple contributing players in the same game) then
+// averaged across games. Returns { [defenseTeam]: avgAllowedPerGame }.
+export function computeDefenseAllowedPerGame(rows, statField, schedule, throughWeek) {
+  const perTeamWeek = {}; // `${defTeam}|${week}` -> summed amount allowed that game
+  for (const r of rows) {
+    if (r.week > throughWeek) continue;
+    const defTeam = schedule[r.week]?.[r.team_abbr];
+    if (!defTeam) continue;
+    const key = `${defTeam}|${r.week}`;
+    perTeamWeek[key] = (perTeamWeek[key] ?? 0) + (Number(r[statField]) || 0);
+  }
+  const sums = {}, games = {};
+  for (const [key, amount] of Object.entries(perTeamWeek)) {
+    const defTeam = key.split('|')[0];
+    sums[defTeam] = (sums[defTeam] ?? 0) + amount;
+    games[defTeam] = (games[defTeam] ?? 0) + 1;
+  }
+  const perGame = {};
+  for (const team of Object.keys(sums)) perGame[team] = sums[team] / games[team];
+  return perGame;
+}
+
+// League-average allowed-per-game across every defense with data — the
+// zero-adjustment baseline an individual defense's allowed rate is read
+// against (mirrors leagueAverages.js's role for team-level projections).
+export function leagueAverageAllowedPerGame(defenseAllowedPerGame) {
+  const values = Object.values(defenseAllowedPerGame);
+  if (values.length === 0) return null;
+  return values.reduce((s, v) => s + v, 0) / values.length;
+}
+
+// The projection itself: player's own rate x (opponent-allowed / league-
+// average-allowed). Degrades gracefully — real data or a documented
+// no-op, never a fabricated number: no player rate at all -> null (nothing
+// to project, e.g. a player with zero games so far); missing/unknown
+// opponent-defense data (early season, insufficient sample) -> falls back
+// to the player's own rate unadjusted (factor of 1), same "no data yet, no
+// adjustment" posture as matchupEngine.js's dome/no-weather default.
+export function projectPlayerStat({ playerRate, opponentAllowedPerGame, leagueAvgAllowedPerGame }) {
+  if (!playerRate) return null;
+  if (opponentAllowedPerGame == null || leagueAvgAllowedPerGame == null || leagueAvgAllowedPerGame === 0) {
+    return { projected: round1(playerRate.avgPerGame), matchupFactor: null };
+  }
+  const matchupFactor = opponentAllowedPerGame / leagueAvgAllowedPerGame;
+  return { projected: round1(playerRate.avgPerGame * matchupFactor), matchupFactor: round3(matchupFactor) };
+}
+
+function round1(v) { return Math.round(v * 10) / 10; }
+function round3(v) { return Math.round(v * 1000) / 1000; }
