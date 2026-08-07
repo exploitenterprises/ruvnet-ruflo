@@ -119,6 +119,39 @@ export async function fetchPbp(season) {
   return coerceNumeric(await fetchGzippedCsv('pbp', `play_by_play_${season}.csv.gz`), PBP_NUMERIC);
 }
 
+const GAMES_NUMERIC = ['season', 'week', 'away_score', 'home_score', 'total', 'away_moneyline', 'home_moneyline',
+  'spread_line', 'away_spread_odds', 'home_spread_odds', 'total_line', 'under_odds', 'over_odds', 'temp', 'wind'];
+
+// Same "LA" (this file) vs "LAR" (the NGS files, data/teams.js) Rams
+// mismatch already fixed once in playerProps.js's buildOpponentSchedule —
+// confirmed live here too, the only mismatch across all 32 current teams
+// (this file also carries retired franchise codes for old seasons: OAK,
+// SD, STL).
+const GAMES_ABBR_TO_CANONICAL = { LA: 'LAR' };
+function canonicalGameAbbr(abbr) { return GAMES_ABBR_TO_CANONICAL[abbr] ?? abbr; }
+
+// Real historical closing lines for every NFL game back to 1999 (release
+// tag "schedules") — confirmed live: `spread_line` uses this project's
+// own "positive = home favored" convention already (e.g. a real 2024 game
+// where the away team (HOU) was the moneyline favorite has spread_line
+// -3, home team IND the underdog — signs match, no negation needed,
+// unlike CFBD's lines which use the opposite convention — see
+// cfbdProvider.js). This is what makes a REAL market-line backtest
+// possible for NFL: analysis/backtest.js's atsThresholdPerformance existed
+// but was never actually fed real historical odds before this — every
+// prior backtest in this project (Elo-only, full-model, weight tuning)
+// compared projections to actual game OUTCOMES, never to what the market
+// was actually offering.
+export async function fetchHistoricalGameLines(season) {
+  const rows = coerceNumeric(await fetchGzippedCsv('schedules', 'games.csv.gz'), GAMES_NUMERIC);
+  return rows
+    .filter((r) => r.season === season && r.game_type === 'REG')
+    .map((r) => ({
+      week: r.week, homeTeam: canonicalGameAbbr(r.home_team), awayTeam: canonicalGameAbbr(r.away_team),
+      spread: r.spread_line, total: r.total_line,
+    }));
+}
+
 // Every officiating crew member for every game back to 2015 (release tag
 // "officials") — confirmed reachable the same way as the other nflverse
 // releases. One row per {game, official}; `position` includes 'Referee'

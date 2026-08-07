@@ -5,17 +5,20 @@
 // data from lines providers where available) — no new external source
 // needed. Pure (no network), operating on rows already fetched.
 //
-// Honest scope limit, checked directly rather than assumed: a genuinely
-// free historical closing-spread source exists for CFB — CFBD's own
-// /lines endpoint returns real historical lines for past weeks/seasons
-// (confirmed by direct use backtesting cfbEdgeBoard.js) — but not for NFL.
-// ESPN's public boxscore/summary endpoint's pickcenter/odds/
-// againstTheSpread fields were checked against real completed games and
-// come back empty every time — it doesn't retain closing lines once a game
-// is over — and The Odds API's historical-odds endpoint is paid-tier only
-// (same finding as lineMovement.js). So NFL head-to-head/division trends
-// here are straight-up only (real, free, useful on its own); CFB gets true
-// ATS whenever the caller supplies spread data per game.
+// Free historical closing-spread sources exist for both leagues, checked
+// directly rather than assumed: CFB via CFBD's own /lines endpoint
+// (confirmed by direct use backtesting cfbEdgeBoard.js), NFL via
+// nflverse's "schedules" release (providers/nflverseProvider.js's
+// fetchHistoricalGameLines — real spread_line back to 1999). ESPN's public
+// boxscore/summary endpoint's pickcenter/odds/againstTheSpread fields were
+// checked against real completed games and come back empty every time —
+// it doesn't retain closing lines once a game is over — and The Odds
+// API's historical-odds endpoint is paid-tier only (same finding as
+// lineMovement.js); neither of those two is usable, but nflverse's own
+// schedules file (already used elsewhere in this project for NGS/pbp
+// data) fills the gap. Both nflHeadToHead.js and cfbAtsHistory.js supply
+// real homeSpread data, so both leagues get true ATS here, not just
+// straight-up.
 
 // One row per completed game: { season, week, homeTeam, awayTeam, homeScore,
 // awayScore, homeSpread (optional) }. `homeSpread` follows this project's

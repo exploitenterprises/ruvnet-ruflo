@@ -141,6 +141,7 @@ export async function fetchLines(year, { week, team } = {}) {
   const games = await getJson(`/lines?${params}`);
   return games.map((g) => ({
     id: g.id,
+    week: g.week,
     homeTeam: g.homeTeam, awayTeam: g.awayTeam,
     lines: (g.lines ?? []).map((l) => ({ provider: l.provider, spread: l.spread, overUnder: l.overUnder, homeMoneyline: l.homeMoneyline, awayMoneyline: l.awayMoneyline })),
   }));
