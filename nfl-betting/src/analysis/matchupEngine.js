@@ -30,18 +30,29 @@ const AVG_PLAYS_PER_GAME = 64;
 // eloPointsPerMargin's NFL default); CFB callers (cfbEdgeBoard.js,
 // cfbFullBacktest.js) pass CFB_* explicitly.
 //
+// Honest result of the CFB-only pass: using the NFL-tuned weights as CFB's
+// starting point (baseline for this search) already scored 71.2% favorite
+// accuracy / 0.190 Brier / 13.1 MAE on CFB alone — the pooled search had
+// incidentally already found a combo that worked well for CFB too. The
+// CFB-only search only found a modest further gain (71.3% / 0.187 / 12.9),
+// not a big one — CFB's accuracy ceiling for this blend appears to already
+// be close to maxed out. Still applied since it's a genuine improvement
+// across all three metrics simultaneously, verified to sit in a stable
+// region (nearby combos in the eff:0-0.2/elo:0.7-0.9/epa:0-0.2,
+// winProb.elo:0-0.3 neighborhood all score similarly), not a fragile spike.
+//
 // *_MARGIN_BLEND_WEIGHTS: how much the projected point margin trusts the
 // efficiency-model estimate (`eff`) vs. Elo (`elo`) vs. EPA/play (`epa`)
 // when EPA data is available. When it isn't, `eff`/`elo` are renormalized
 // to sum to 1 (dropping `epa`'s share) rather than using a separate
 // hardcoded fallback.
 export const NFL_MARGIN_BLEND_WEIGHTS = { eff: 0.2, elo: 0.7, epa: 0.1 };
-export const CFB_MARGIN_BLEND_WEIGHTS = { eff: 0.2, elo: 0.7, epa: 0.1 }; // placeholder — see tuneBlendWeights.js's CFB-only pass
+export const CFB_MARGIN_BLEND_WEIGHTS = { eff: 0.1, elo: 0.8, epa: 0.1 };
 // *_WIN_PROB_BLEND_WEIGHTS: how much the final win probability trusts
 // Elo's own win-probability estimate vs. the score-based estimate derived
 // from the (already-blended) projected margin.
 export const NFL_WIN_PROB_BLEND_WEIGHTS = { elo: 0, score: 1 };
-export const CFB_WIN_PROB_BLEND_WEIGHTS = { elo: 0, score: 1 }; // placeholder — see tuneBlendWeights.js's CFB-only pass
+export const CFB_WIN_PROB_BLEND_WEIGHTS = { elo: 0, score: 1 };
 
 // Ratio-based unit projection: expected points a unit produces/allows relative
 // to league average, in the style of a simplified opponent-adjusted efficiency

@@ -200,6 +200,59 @@ right, a real but minor trade given the size of the accuracy gain. Spread
 bias improved (moved closer to zero) in every single league-season,
 including CFB's previously-worst offender (2025: +2.0 → +0.5).
 
+## Per-league weight split
+
+The pooled search above fits ONE shared weight set for both leagues — a
+forced compromise if NFL and CFB actually want different weights, which is
+plausible given how differently the two leagues' spread bias behaved
+throughout this whole backtest (CFB's bias ran consistently higher than
+NFL's at every stage). `tuneBlendWeights.js`'s `leagues` option re-runs the
+identical search pooling only CFB's 1,427 games (2024+2025), fitting
+`CFB_MARGIN_BLEND_WEIGHTS`/`CFB_WIN_PROB_BLEND_WEIGHTS` separately from
+`NFL_*` — same precedent as `CFB_ELO_POINTS_PER_MARGIN` already being a
+separate constant from `NFL_ELO_POINTS_PER_MARGIN` in `powerRatings.js`.
+
+**Honest framing before the numbers**: the pooled search's winning combo
+(used as this CFB-only search's baseline) already scored 71.2% favorite
+accuracy / 0.190 Brier / 13.1 MAE on CFB alone — it had incidentally found
+something that worked reasonably well for CFB too, not just NFL. So this
+pass was never going to be a dramatic win; the real question was whether
+CFB had its own, different local optimum worth capturing.
+
+**Chosen CFB-specific weights**:
+
+| Weight | Pooled (NFL_\*, used for CFB until now) | CFB-only tuned |
+|---|---|---|
+| Margin blend `eff` | 0.2 | 0.1 |
+| Margin blend `elo` | 0.7 | 0.8 |
+| Margin blend `epa` | 0.1 | 0.1 |
+| Win-prob blend `elo` | 0 | 0 (unchanged) |
+| Win-prob blend `score` | 1 | 1 (unchanged) |
+
+Same direction as the pooled search found (trust Elo more, efficiency
+stats less) — CFB just wanted to push slightly further (0.8 vs 0.7). Verified
+stable: the eff:0-0.2/elo:0.7-0.9/epa:0-0.2 neighborhood all scores
+similarly (70.7-71.3% accuracy, 0.187-0.192 Brier, 12.9-13.1 MAE), not a
+fragile spike.
+
+**Before (pooled weights) → after (CFB-specific weights)**:
+
+| Metric | CFB 2024 | CFB 2025 |
+|---|---|---|
+| Brier score | 0.197 → **0.193** | 0.183 → **0.181** |
+| Favorite accuracy | 69.9% → **70.5%** | 72.7% → 72.1% |
+| Spread MAE | 13.3 → **13.1** | 12.8 → **12.6** |
+| Spread bias | +0.6 → -0.6 | +0.5 → -0.9 |
+
+**Honest read**: a real but modest win, not a big one. Brier and spread
+MAE both improved in both seasons — genuine, if small, gains. Favorite
+accuracy split (2024 better, 2025 slightly worse), the same season-level
+mixed pattern seen throughout this whole backtest rather than something
+new. Bias flipped sign in both seasons without consistently shrinking in
+magnitude (2025's actually grew slightly, +0.5 → -0.9) — worth watching
+in a future season's data rather than a settled result. NFL's weights and
+results are unchanged by this pass (`NFL_*` untouched).
+
 ## What this still doesn't tell us
 
 - **Weather and starter injuries** aren't included (no honest historical
