@@ -611,6 +611,12 @@
       "value": "skipped: connectors unavailable (Crypto.com/Stocktwits enabledInChat=false despite connected=true at account level)",
       "namespace": "default",
       "timestamp": 1786187868756
+    },
+    {
+      "key": "scan_20260808T121956Z",
+      "value": "skipped: connectors unavailable (Crypto.com/Stocktwits enabledInChat=false despite connected=true at account level)",
+      "namespace": "default",
+      "timestamp": 1786191601805
     }
   ]
 }
