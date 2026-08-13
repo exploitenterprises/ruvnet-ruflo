@@ -320,6 +320,57 @@ CFB is a coin-flip against the real closing line at every disagreement
 threshold tested — consistent with an efficient market and no CFB-specific
 edge having been found yet.
 
+### Extended to the full 1999-2025 history (added 2026-08-13)
+
+Direct follow-up: "backtest it back to 1999 and find the win percentage
+when it is trying to beat the market." nflverse's real closing lines cover
+every NFL season back to 1999 (confirmed), so the same
+`backtestNflAts`/`atsThresholdPerformance` pipeline above was run for
+every one of those 27 seasons — 6,116 real games total, each with the
+full point-in-time stat/Elo/EPA blend reconstructed and joined to its
+actual closing spread.
+
+**Pooled across all 27 seasons, every threshold**:
+
+| Threshold | n | Record | Cover% | SE from 50% |
+|---|---|---|---|---|
+| 0 (all games) | 6,116 | 2993-2955-168 | 50.3% | 0.46 |
+| 1 | 4,718 | 2311-2279-128 | 50.3% | 0.41 |
+| 2 | 3,414 | 1681-1642-91 | 50.6% | 0.69 |
+| 3 | 2,415 | 1192-1157-66 | 50.7% | 0.68 |
+| 5 | 1,018 | 504-486-28 | 50.9% | 0.57 |
+
+Nothing here clears even 1 SE, let alone the conventional 2 SE bar for
+"real." **Over 27 seasons and 6,116 real games, the model has performed
+exactly like a coin flip against the closing NFL line — no edge, at any
+disagreement threshold.** And a coin flip isn't breakeven against a real
+book: standard -110 juice needs 52.4% to break even, so 50.3-50.9% is a
+slow, structural loss if bet at scale, not a wash.
+
+Splitting into four ~7-season eras confirms this isn't one bad stretch
+dragging down a real signal elsewhere — every era is close to 50% and none
+is statistically distinguishable from it (2006-2012's 52.8% at threshold 0
+is the single largest deviation found anywhere in 27 years, at 2.12 SE —
+one such result out of 20 era/threshold cells tested is exactly what
+random chance predicts, not a discovery):
+
+| Era | Threshold-0 cover% | SE from 50% |
+|---|---|---|
+| 1999-2005 | 49.5% | -0.37 |
+| 2006-2012 | 52.8% | 2.12 |
+| 2013-2019 | 49.7% | -0.23 |
+| 2020-2025 | 49.4% | -0.48 |
+
+Per-season cover% swings wildly (42.8% in 2025 to 56.7% in 2009) with no
+visible pattern — textbook noise around a true ~50% baseline, the same
+lesson the 2024-vs-2025 flip already taught on a smaller sample. **Bottom
+line, unchanged by 25 more years of data: this model has no demonstrated
+edge against the market it's supposedly trying to beat.** Any future
+attempt to "improve the win rate" against real lines needs to be judged
+against this exact benchmark — 50.3-50.9% pooled, dead flat across eras —
+and validated on data the tuning never touched, or it's just re-fitting to
+the same kind of noise this run already ruled out.
+
 **What this means going forward**: the favorite-accuracy/Brier/MAE numbers
 throughout this whole report measure whether the model predicts outcomes
 well — genuinely useful for calibration — but they are not the same
